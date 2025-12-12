@@ -4,48 +4,29 @@ import streamlit.components.v1 as components
 # --- CONFIGURAZIONE ---
 st.set_page_config(page_title="ProBet AI", layout="wide", initial_sidebar_state="collapsed")
 
-# CSS ESTREMO PER RIMUOVERE BORDI BIANCHI E HEADER STREAMLIT
 st.markdown("""
     <style>
-    /* Nasconde menu hamburger e footer */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Nasconde la barra superiore bianca di default di Streamlit */
-    div[data-testid="stHeader"] {
-        height: 0px !important;
-        background-color: transparent !important;
-        visibility: hidden !important;
-    }
-    
-    /* Rimuove TUTTI i margini bianchi attorno all'app */
+    /* RESET MARGINI E SCROLL */
     .block-container {
-        padding-top: 0rem !important;
-        padding-bottom: 0rem !important;
-        padding-left: 0rem !important;
-        padding-right: 0rem !important;
+        padding: 0 !important;
         margin: 0 !important;
         max-width: 100% !important;
     }
-    
-    /* Forza l'iframe a tutto schermo senza bordi */
     iframe {
         width: 100vw !important;
         height: 100vh !important;
-        border: none !important;
-        display: block !important;
-        margin: 0 !important;
-        padding: 0 !important;
+        border: none;
+        display: block;
     }
-    
-    /* Rimuove scrollbar esterne di Streamlit */
-    section[data-testid="stSidebar"] { display: none; }
-    .main { overflow: hidden !important; }
+    div[data-testid="stHeader"] { display: none; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- CODICE APP (HTML/JS) ---
+# --- CODICE APP ---
 html_code = """
 <!DOCTYPE html>
 <html lang="it">
@@ -59,49 +40,18 @@ html_code = """
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;600&family=Inter:wght@400;600;700;800&display=swap');
   
-  /* RESET TOTALE PER SCORRIMENTO FLUIDO */
+  /* STILI BASE */
   html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      background-color: #0f172a;
-      color: #e2e8f0;
+      background-color: #0f172a; 
+      color: #e2e8f0; 
       font-family: 'Inter', sans-serif;
-      overflow-y: auto; /* Abilita scroll */
-      -webkit-overflow-scrolling: touch; /* Scroll fluido su iOS */
-      scroll-behavior: smooth;
-      scrollbar-width: none; /* Nasconde scrollbar Firefox */
-      -ms-overflow-style: none;  /* Nasconde scrollbar IE */
+      margin: 0; padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
   }
-  /* Nasconde scrollbar Chrome/Safari */
-  body::-webkit-scrollbar { display: none; }
-
   .teko { font-family: 'Teko', sans-serif; }
   
-  /* HEADER FISSO IN ALTO */
-  header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 50;
-      background-color: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid #1e293b;
-  }
-
-  /* PADDING PER CONTENUTO (per non finire sotto l'header) */
-  main {
-      padding-top: 80px; /* Spazio per l'header */
-      padding-bottom: 40px;
-      padding-left: 16px;
-      padding-right: 16px;
-      max-width: 1200px;
-      margin: 0 auto;
-  }
-
-  /* STILI ELEMENTI */
+  /* MENU TENDINA */
   select { background-color: #1e293b; color: white; border: 1px solid #334155; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; appearance: none; outline: none; }
   select option { background-color: #1e293b; color: white; }
 
@@ -115,8 +65,16 @@ html_code = """
   .res { font-size:22px; font-weight:900; margin:2px 0; font-family:'Teko',sans-serif; line-height:1; }
   .prob-badge { font-size:10px; background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; display:inline-block; margin-top:4px; font-weight:700; }
   .confidence-pill { position:absolute; top:6px; right:6px; font-size:10px; background:#fff; color:#000; padding:3px 7px; border-radius:12px; font-weight:800; box-shadow:0 2px 4px rgba(0,0,0,0.2); }
+  
+  /* LOADER */
   .loader { width:14px; height:14px; border:2px solid #475569; border-bottom-color:#3b82f6; border-radius:50%; display:inline-block; animation:rotation 1s linear infinite; }
   @keyframes rotation { 0% { transform:rotate(0deg);} 100% { transform:rotate(360deg);} }
+
+  /* HEADER FISSO */
+  header { position: fixed; top: 0; left: 0; width: 100%; z-index: 50; background-color: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #1e293b; }
+  
+  /* PADDING PER HEADER */
+  main { padding-top: 80px; padding-bottom: 40px; padding-left: 16px; padding-right: 16px; max-width: 800px; margin: 0 auto; }
 </style>
 </head>
 <body>
@@ -159,7 +117,7 @@ html_code = """
               <input type="number" id="line-f-a" value="11.5" class="input-dark text-xs" placeholder="Ospite">
             </div>
           </div>
-          <div id="box-tiri-lines" class="bg-slate-950 p-3 rounded-lg border border-slate-800 md:col-span-2">
+          <div id="box-tiri-lines" class="bg-slate-950 p-3 rounded-lg border border-slate-800 md:col-span-2 hidden">
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <div class="text-[9px] font-bold text-blue-400 uppercase mb-2 text-center border-b border-slate-800 pb-1">TIRI TOTALI</div>
@@ -187,7 +145,7 @@ html_code = """
       </button>
     </div>
 
-    <div id="results" class="hidden animate-fade-in pb-10">
+    <div id="results" class="hidden animate-fade-in pb-20">
       <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="alert-circle" class="text-red-400 w-4 h-4"></i><span class="text-sm font-bold text-red-400 uppercase tracking-widest" id="title-falli">Analisi Falli</span></div>
       <div id="grid-falli" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8"></div>
 
@@ -234,6 +192,11 @@ html_code = """
       if(document.getElementById('box-tiri-lines')) {
           document.getElementById('box-tiri-lines').style.display = (l==='SERIE_A') ? 'block' : 'none';
       }
+      
+      // Reset dei dati visivi
+      document.getElementById('home').innerHTML = '<option>Caricamento...</option>';
+      document.getElementById('away').innerHTML = '<option>Caricamento...</option>';
+      document.getElementById('referee').innerHTML = '<option>Caricamento...</option>';
       
       loadData();
     }
@@ -299,8 +262,12 @@ html_code = """
       const h=document.getElementById('home'), a=document.getElementById('away'), r=document.getElementById('referee');
       if(!h || !a || !r) return;
       h.innerHTML=''; a.innerHTML=''; r.innerHTML='<option value="">Seleziona Arbitro</option>';
-      [...new Set(DB.fc.map(x=>x.Team))].sort().forEach(t => { h.add(new Option(t,t)); a.add(new Option(t,t)); });
-      [...new Set(DB.refs.map(x=>x.name))].sort().forEach(n => r.add(new Option(n,n));
+      
+      // Combina squadre da Falli e Tiri per sicurezza
+      const teams = new Set([ ...DB.fc.map(x=>x.Team), ...DB.tiri.map(x=>x.Team) ]);
+      [...teams].sort().forEach(t => { h.add(new Option(t,t)); a.add(new Option(t,t)); });
+      
+      [...new Set(DB.refs.map(x=>x.name))].sort().forEach(n => r.add(new Option(n,n)));
     }
 
     function poisson(k, lambda) { return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k); }
