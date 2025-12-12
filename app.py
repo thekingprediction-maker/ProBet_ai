@@ -4,35 +4,106 @@ import streamlit.components.v1 as components
 # --- CONFIGURAZIONE ---
 st.set_page_config(page_title="ProBet AI", layout="wide", initial_sidebar_state="collapsed")
 
+# CSS ESTREMO PER RIMUOVERE BORDI BIANCHI E HEADER STREAMLIT
 st.markdown("""
     <style>
+    /* Nasconde menu hamburger e footer */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    .block-container { padding: 0 !important; max-width: 100% !important; }
-    iframe { width: 100% !important; height: 100vh !important; }
+    
+    /* Nasconde la barra superiore bianca di default di Streamlit */
+    div[data-testid="stHeader"] {
+        height: 0px !important;
+        background-color: transparent !important;
+        visibility: hidden !important;
+    }
+    
+    /* Rimuove TUTTI i margini bianchi attorno all'app */
+    .block-container {
+        padding-top: 0rem !important;
+        padding-bottom: 0rem !important;
+        padding-left: 0rem !important;
+        padding-right: 0rem !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    /* Forza l'iframe a tutto schermo senza bordi */
+    iframe {
+        width: 100vw !important;
+        height: 100vh !important;
+        border: none !important;
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Rimuove scrollbar esterne di Streamlit */
+    section[data-testid="stSidebar"] { display: none; }
+    .main { overflow: hidden !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- CODICE APP ---
+# --- CODICE APP (HTML/JS) ---
 html_code = """
 <!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>ProBet AI</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;600&family=Inter:wght@400;600;700;800&display=swap');
-  body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; }
+  
+  /* RESET TOTALE PER SCORRIMENTO FLUIDO */
+  html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #0f172a;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+      overflow-y: auto; /* Abilita scroll */
+      -webkit-overflow-scrolling: touch; /* Scroll fluido su iOS */
+      scroll-behavior: smooth;
+      scrollbar-width: none; /* Nasconde scrollbar Firefox */
+      -ms-overflow-style: none;  /* Nasconde scrollbar IE */
+  }
+  /* Nasconde scrollbar Chrome/Safari */
+  body::-webkit-scrollbar { display: none; }
+
   .teko { font-family: 'Teko', sans-serif; }
   
-  /* FIX MENU TENDINA BIANCO */
-  select { background-color: #1e293b; color: white; border: 1px solid #334155; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; appearance: none; }
-  select option { background-color: #1e293b; color: white; } /* Importante per Android/iOS */
+  /* HEADER FISSO IN ALTO */
+  header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 50;
+      background-color: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #1e293b;
+  }
+
+  /* PADDING PER CONTENUTO (per non finire sotto l'header) */
+  main {
+      padding-top: 80px; /* Spazio per l'header */
+      padding-bottom: 40px;
+      padding-left: 16px;
+      padding-right: 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+  }
+
+  /* STILI ELEMENTI */
+  select { background-color: #1e293b; color: white; border: 1px solid #334155; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; appearance: none; outline: none; }
+  select option { background-color: #1e293b; color: white; }
 
   .input-dark { background:#1e293b; border:1px solid #334155; color:white; padding:8px; border-radius:6px; width:100%; text-align:center; font-weight:700; }
   .value-box { padding:12px; border-radius:10px; margin-bottom:8px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.2); border:1px solid; position:relative; overflow:hidden; }
@@ -50,32 +121,32 @@ html_code = """
 </head>
 <body>
 
-  <header class="fixed top-0 w-full z-30 bg-[#0f172a]/95 backdrop-blur border-b border-slate-800">
+  <header>
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3"><div class="text-2xl font-bold teko text-white tracking-wide">PROBET <span class="text-blue-500">AI</span></div></div>
       <div id="status-pill" class="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800"><div class="loader"></div> <span class="text-[10px] font-bold text-slate-400">LOADING</span></div>
     </div>
   </header>
 
-  <main class="pt-20 px-4 max-w-6xl mx-auto space-y-6 pb-20">
-    <div class="flex justify-center">
-      <div class="bg-slate-900 p-1 rounded-xl border border-slate-800 flex gap-2 w-full max-w-sm">
-        <button onclick="switchLeague('SERIE_A')" id="btn-sa" class="flex-1 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-lg transition-all">SERIE A</button>
-        <button onclick="switchLeague('LIGA')" id="btn-lg" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:bg-slate-800 transition-all">LIGA</button>
+  <main>
+    <div class="flex justify-center mb-6">
+      <div class="bg-slate-900 p-1 rounded-xl border border-slate-800 flex gap-2 w-full max-w-sm shadow-lg">
+        <button onclick="switchLeague('SERIE_A')" id="btn-sa" class="flex-1 py-3 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-lg transition-all">SERIE A</button>
+        <button onclick="switchLeague('LIGA')" id="btn-lg" class="flex-1 py-3 text-xs font-bold rounded-lg text-slate-400 hover:bg-slate-800 transition-all">LIGA</button>
       </div>
     </div>
 
-    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl mb-8">
+      <div class="grid grid-cols-1 gap-4 mb-5">
         <div><label class="text-[10px] font-bold text-slate-500 uppercase ml-1">CASA</label><select id="home" class="mt-1"><option>Attendi...</option></select></div>
         <div><label class="text-[10px] font-bold text-slate-500 uppercase ml-1">OSPITE</label><select id="away" class="mt-1"><option>Attendi...</option></select></div>
         <div><label class="text-[10px] font-bold text-slate-500 uppercase ml-1">ARBITRO</label><select id="referee" class="mt-1 text-yellow-400"><option>Attendi...</option></select></div>
       </div>
 
-      <hr class="border-slate-800 mb-5">
+      <hr class="border-slate-800 mb-5 opacity-50">
 
       <details class="group bg-black/20 p-4 rounded-xl border border-slate-800/50 mb-5" open>
-        <summary class="flex justify-between items-center cursor-pointer font-bold text-slate-400 text-xs uppercase mb-2">
+        <summary class="flex justify-between items-center cursor-pointer font-bold text-slate-400 text-xs uppercase mb-2 select-none">
           <span class="flex items-center gap-2"><i data-lucide="edit-3" class="w-3 h-3"></i> Quote Bookmaker</span>
           <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
         </summary>
@@ -111,12 +182,12 @@ html_code = """
         </div>
       </details>
 
-      <button onclick="calculate()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-black text-xl rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95 transition-all flex justify-center items-center gap-2">
-        <i data-lucide="zap" class="w-5 h-5 fill-white"></i> ANALIZZA CON POISSON AI
+      <button onclick="calculate()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-black text-xl rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95 transition-all flex justify-center items-center gap-2 transform active:scale-95 duration-100">
+        <i data-lucide="zap" class="w-5 h-5 fill-white"></i> ANALIZZA DATI
       </button>
     </div>
 
-    <div id="results" class="hidden animate-fade-in">
+    <div id="results" class="hidden animate-fade-in pb-10">
       <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="alert-circle" class="text-red-400 w-4 h-4"></i><span class="text-sm font-bold text-red-400 uppercase tracking-widest" id="title-falli">Analisi Falli</span></div>
       <div id="grid-falli" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8"></div>
 
@@ -129,200 +200,187 @@ html_code = """
     </div>
   </main>
 
-<script>
-const MASTER_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTR5vVYi1_EFk97GPmK8wOdZe6cImPcVYYEX-8rIlUyFg2EJjRspgcgBZ0cDAuVP--Aepi-wxEOdCOp/pub?output=csv";
-let CURRENT_LEAGUE = 'SERIE_A';
-const CONFIG = { SERIE_A: {}, LIGA: {} };
-const DB = { refs: [], fc: [], fp: [], tiri: [], tiriStats: {avgHome:0, avgAway:0, avgHomeTP:0, avgAwayTP:0} };
+  <script>
+    const MASTER_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTR5vVYi1_EFk97GPmK8wOdZe6cImPcVYYEX-8rIlUyFg2EJjRspgcgBZ0cDAuVP--Aepi-wxEOdCOp/pub?output=csv";
+    let CURRENT_LEAGUE = 'SERIE_A';
+    const CONFIG = { SERIE_A: {}, LIGA: {} };
+    const DB = { refs: [], fc: [], fp: [], tiri: [], tiriStats: {avgHome:0, avgAway:0, avgHomeTP:0, avgAwayTP:0} };
 
-document.addEventListener('DOMContentLoaded', async () => { 
-  if(window.lucide) lucide.createIcons();
-  await initMasterConfig(); 
-});
+    document.addEventListener('DOMContentLoaded', async () => { 
+      if(window.lucide) lucide.createIcons();
+      await initMasterConfig(); 
+    });
 
-async function initMasterConfig() {
-  try {
-    const r = await fetch(MASTER_URL + "&t=" + Date.now());
-    const data = Papa.parse(await r.text(), { header: false, skipEmptyLines: true }).data;
-    const getL = (i) => (data[i] && data[i][1]) ? data[i][1].trim() : "";
-    CONFIG.SERIE_A = { arb: getL(0), curr: getL(1), prev: getL(2), tiri: getL(3) };
-    CONFIG.LIGA = { arb: getL(4), curr: getL(5), prev: getL(6), tiri: getL(7) };
-    document.getElementById('status-pill').innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-emerald-400 text-[10px] font-bold">SYSTEM READY</span>`;
-    switchLeague('SERIE_A');
-  } catch(e) { console.error(e); }
-}
+    async function initMasterConfig() {
+      try {
+        const r = await fetch(MASTER_URL + "&t=" + Date.now());
+        const text = await r.text();
+        const data = Papa.parse(text, { header: false, skipEmptyLines: true }).data;
+        const getL = (i) => (data[i] && data[i][1]) ? data[i][1].trim() : "";
+        CONFIG.SERIE_A = { arb: getL(0), curr: getL(1), prev: getL(2), tiri: getL(3) };
+        CONFIG.LIGA = { arb: getL(4), curr: getL(5), prev: getL(6), tiri: "" }; 
+        const pill = document.getElementById('status-pill');
+        if(pill) pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-emerald-400 text-[10px] font-bold">SYSTEM READY</span>`;
+        switchLeague('SERIE_A');
+      } catch(e) { console.error("Init Error", e); }
+    }
 
-function switchLeague(l) {
-  CURRENT_LEAGUE = l;
-  const act="bg-blue-600 text-white shadow-lg", inact="text-slate-400 hover:bg-slate-800";
-  document.getElementById('btn-sa').className = `flex-1 py-2 text-xs font-bold rounded-lg transition-all ${l==='SERIE_A'?act:inact}`;
-  document.getElementById('btn-lg').className = `flex-1 py-2 text-xs font-bold rounded-lg transition-all ${l==='LIGA'?act:inact}`;
-  if(document.getElementById('box-tiri-lines')) document.getElementById('box-tiri-lines').style.display = l==='SERIE_A'?'block':'none';
-  
-  // RESET GRAFICO IMMEDIATO
-  document.getElementById('home').innerHTML = '<option>Caricamento...</option>';
-  loadData();
-}
+    function switchLeague(l) {
+      CURRENT_LEAGUE = l;
+      const act="bg-blue-600 text-white shadow-lg", inact="text-slate-400 hover:bg-slate-800";
+      document.getElementById('btn-sa').className = `flex-1 py-3 text-xs font-bold rounded-lg transition-all ${l==='SERIE_A'?act:inact}`;
+      document.getElementById('btn-lg').className = `flex-1 py-3 text-xs font-bold rounded-lg transition-all ${l==='LIGA'?act:inact}`;
+      
+      if(document.getElementById('box-tiri-lines')) {
+          document.getElementById('box-tiri-lines').style.display = (l==='SERIE_A') ? 'block' : 'none';
+      }
+      
+      loadData();
+    }
 
-async function safeFetch(url) {
-    if(!url) return "";
-    try {
-        const r = await fetch(url.includes('?') ? url+'&t='+Date.now() : url+'?t='+Date.now());
-        return await r.text();
-    } catch(e) { return ""; }
-}
-
-async function loadData() {
-  const L = CONFIG[CURRENT_LEAGUE];
-  if(!L || !L.arb) return;
-
-  // CARICAMENTO SICURO: Se un file fallisce, gli altri si caricano lo stesso
-  const pA = safeFetch(L.arb);
-  const pFc = safeFetch(L.curr);
-  const pFp = safeFetch(L.prev);
-  const pTr = safeFetch(L.tiri);
-
-  const [tA, tFc, tFp, tTr] = await Promise.all([pA, pFc, pFp, pTr]);
-
-  // ARBITRI
-  if(tA) {
-      const arbD = Papa.parse(tA, {header:false, skipEmptyLines:true}).data;
-      let start=0; if(arbD[0] && (String(arbD[0][0]).includes('Arbitro')||String(arbD[0][0]).includes('Media'))) start=1;
-      DB.refs = arbD.slice(start).map(r => ({name:cleanStr(r[0]), avg:cleanNum(r[2])})).filter(x=>x.name.length>2);
-  }
-
-  // FALLI
-  if(tFc && tFp) {
-      const parseF = (txt) => {
-        if(!txt) return [];
-        const d = Papa.parse(txt, {header:false, skipEmptyLines:true}).data;
-        let s=0; for(let i=0;i<Math.min(5,d.length);i++) if(d[i].join(' ').toUpperCase().includes('SQUADRA')) s=i+1;
-        return d.slice(s).map(r => ({Team:cleanStr(r[1]), Loc:(r[2]||"").toUpperCase(), Sub:cleanNum(r[3]), Comm:cleanNum(r[4])})).filter(x=>x.Team);
+    async function loadData() {
+      const L = CONFIG[CURRENT_LEAGUE];
+      if(!L || !L.arb) return;
+      
+      const fetchRaw = async (u) => { 
+        if(!u) return ""; 
+        try { const r = await fetch(u.includes('?')?u+'&t='+Date.now():u+'?t='+Date.now()); return await r.text(); } catch(e){return "";} 
       };
-      DB.fc = parseF(tFc); DB.fp = parseF(tFp);
-  }
 
-  // TIRI
-  DB.tiri = [];
-  if(tTr && tTr.length>50) {
-    const rd = Papa.parse(tTr, {header:false, skipEmptyLines:true}).data;
-    let si=-1; for(let i=0;i<Math.min(20,rd.length);i++) if(rd[i][0] && String(rd[i][0]).includes("Squadra")) si=i;
-    if(si!==-1) {
-      let sumH=0, sumA=0, sumHtp=0, sumAtp=0, count=0;
-      DB.tiri = rd.slice(si+1).map(r => {
-        if(!r[0]) return null;
-        const pc = cleanNum(r[1])||1; const pf = cleanNum(r[6])||1;
-        const tfc = cleanNum(r[2])/pc; const tsc = cleanNum(r[3])/pc;
-        const tff = cleanNum(r[7])/pf; const tsf = cleanNum(r[8])/pf;
-        const tpfc = cleanNum(r[4])/pc; const tpsc = cleanNum(r[5])/pc;
-        const tpff = cleanNum(r[9])/pf; const tpsf = cleanNum(r[10])/pf;
-        sumH+=tfc; sumA+=tff; sumHtp+=tpfc; sumAtp+=tpff; count++;
-        return { Team: cleanStr(r[0]), TFC: tfc, TSC: tsc, TFF: tff, TSF: tsf, TPC: tpfc, TPSC: tpsc, TPF: tpff, TPSF: tpsf };
-      }).filter(x=>x);
-      if(count>0) { DB.tiriStats.avgHome=sumH/count; DB.tiriStats.avgAway=sumA/count; DB.tiriStats.avgHomeTP=sumHtp/count; DB.tiriStats.avgAwayTP=sumAtp/count; }
+      try {
+        const [tA, tFc, tFp] = await Promise.all([ fetchRaw(L.arb), fetchRaw(L.curr), fetchRaw(L.prev) ]);
+        
+        if(tA) {
+            const arbD = Papa.parse(tA, {header:false, skipEmptyLines:true}).data;
+            let start=0; if(arbD[0] && (String(arbD[0][0]).includes('Arbitro')||String(arbD[0][0]).includes('Media'))) start=1;
+            DB.refs = arbD.slice(start).map(r => ({name:cleanStr(r[0]), avg:cleanNum(r[2])})).filter(x=>x.name.length>2);
+        }
+
+        if(tFc && tFp) {
+            const parseF = (txt) => {
+              if(!txt) return [];
+              const d = Papa.parse(txt, {header:false, skipEmptyLines:true}).data;
+              let s=0; for(let i=0;i<Math.min(5,d.length);i++) if(d[i].join(' ').toUpperCase().includes('SQUADRA')) s=i+1;
+              return d.slice(s).map(r => ({Team:cleanStr(r[1]), Loc:(r[2]||"").toUpperCase(), Sub:cleanNum(r[3]), Comm:cleanNum(r[4])})).filter(x=>x.Team);
+            };
+            DB.fc = parseF(tFc); DB.fp = parseF(tFp);
+        }
+
+        DB.tiri = [];
+        if(L.tiri) {
+            const tTr = await fetchRaw(L.tiri);
+            if(tTr && tTr.length>50) {
+              const rd = Papa.parse(tTr, {header:false, skipEmptyLines:true}).data;
+              let si=-1; for(let i=0;i<Math.min(20,rd.length);i++) if(rd[i][0] && String(rd[i][0]).includes("Squadra")) si=i;
+              if(si!==-1) {
+                let sumH=0, sumA=0, sumHtp=0, sumAtp=0, count=0;
+                DB.tiri = rd.slice(si+1).map(r => {
+                  if(!r[0]) return null;
+                  const pc = cleanNum(r[1])||1; const pf = cleanNum(r[6])||1;
+                  const tfc = cleanNum(r[2])/pc; const tsc = cleanNum(r[3])/pc;
+                  const tff = cleanNum(r[7])/pf; const tsf = cleanNum(r[8])/pf;
+                  const tpfc = cleanNum(r[4])/pc; const tpsc = cleanNum(r[5])/pc;
+                  const tpff = cleanNum(r[9])/pf; const tpsf = cleanNum(r[10])/pf;
+                  sumH+=tfc; sumA+=tff; sumHtp+=tpfc; sumAtp+=tpff; count++;
+                  return { Team: cleanStr(r[0]), TFC: tfc, TSC: tsc, TFF: tff, TSF: tsf, TPC: tpfc, TPSC: tpsc, TPF: tpff, TPSF: tpsf };
+                }).filter(x=>x);
+                if(count>0) { DB.tiriStats.avgHome=sumH/count; DB.tiriStats.avgAway=sumA/count; DB.tiriStats.avgHomeTP=sumHtp/count; DB.tiriStats.avgAwayTP=sumAtp/count; }
+              }
+            }
+        }
+        updateSel();
+      } catch(e) { console.error("Error Loading", e); }
     }
-  }
-  updateSel();
-}
 
-function cleanNum(v) { return parseFloat(String(v).replace(',','.').replace('%','').trim())||0; }
-function cleanStr(v) { return String(v).trim().replace(/\*/g,''); }
-
-function updateSel() {
-  const h=document.getElementById('home'), a=document.getElementById('away'), r=document.getElementById('referee');
-  if(!h || !a || !r) return;
-  h.innerHTML=''; a.innerHTML=''; r.innerHTML='<option value="">Seleziona Arbitro</option>';
-  
-  // Combina squadre da Falli e Tiri per sicurezza
-  const teams = new Set([ ...DB.fc.map(x=>x.Team), ...DB.tiri.map(x=>x.Team) ]);
-  [...teams].sort().forEach(t => { h.add(new Option(t,t)); a.add(new Option(t,t)); });
-  
-  [...new Set(DB.refs.map(x=>x.name))].sort().forEach(n => r.add(new Option(n,n)));
-}
-
-function poisson(k, lambda) { return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k); }
-function factorial(n) { if (n===0 || n===1) return 1; let r=1; for(let i=2; i<=n; i++) r*=i; return r; }
-function poissonProb(line, lambda, type) {
-    let pUnder = 0; for(let k=0; k<=Math.floor(line); k++) pUnder += poisson(k, lambda);
-    return type==='OVER' ? (1-pUnder)*100 : pUnder*100;
-}
-
-function calculate() {
-  const home = document.getElementById('home').value;
-  const away = document.getElementById('away').value;
-  const ref = document.getElementById('referee').value;
-  if(!home || home===away || home==="Attendi...") return alert("Seleziona squadre e arbitro.");
-
-  // FALLI (Weighted Avg)
-  const getF = (t,loc,dc,dp) => {
-    const c = dc.find(x=>x.Team===t && x.Loc.includes(loc));
-    const p = dp.find(x=>x.Team===t && x.Loc.includes(loc));
-    if(!c) return {c:0,s:0};
-    return p ? {c:c.Comm*0.7+p.Comm*0.3, s:c.Sub*0.7+p.Sub*0.3} : {c:c.Comm, s:c.Sub};
-  };
-  const fH = getF(home,'CASA',DB.fc,DB.fp);
-  const fA = getF(away,'FUORI',DB.fc,DB.fp);
-  const rawTot = ((fH.c+fA.s)/2) + ((fA.c+fH.s)/2);
-  
-  let finalPred = rawTot;
-  let refInfo = "Ref: NO";
-  const rf = DB.refs.find(x=>x.name===ref);
-  if(rf && rf.avg > 0) { finalPred = (rawTot + rf.avg) / 2; refInfo = `Ref: ${rf.avg}`; }
-  
-  renderBox('grid-falli', "MATCH TOTALE", finalPred, 'line-f-match');
-  renderBox('grid-falli', home, ((fH.c+fA.s)/2), 'line-f-h');
-  renderBox('grid-falli', away, ((fA.c+fH.s)/2), 'line-f-a');
-  document.getElementById('title-falli').innerText = `Analisi Falli (${refInfo})`;
-
-  // TIRI (Strength)
-  const sec = document.getElementById('sec-tiri');
-  if(CURRENT_LEAGUE==='SERIE_A' && DB.tiri.length) {
-    sec.classList.remove('hidden');
-    const hStats = DB.tiri.find(x=>x.Team.toUpperCase()===home.toUpperCase());
-    const aStats = DB.tiri.find(x=>x.Team.toUpperCase()===away.toUpperCase());
-    const L = DB.tiriStats;
+    function cleanNum(v) { return parseFloat(String(v).replace(',','.').replace('%','').trim())||0; }
+    function cleanStr(v) { return String(v).trim().replace(/\*/g,''); }
     
-    if(hStats && aStats && L.avgHome > 0) {
-      const expTiriHome = (hStats.TFC * aStats.TSF) / L.avgHome;
-      const expTiriAway = (aStats.TFF * hStats.TSC) / L.avgAway;
-      const expTPHome = (hStats.TPC * aStats.TPSF) / L.avgHomeTP;
-      const expTPAway = (aStats.TPF * hStats.TPSC) / L.avgAwayTP;
-
-      renderBox('grid-tiri', "MATCH TOTALE", expTiriHome+expTiriAway, 'line-t-match');
-      renderBox('grid-tiri', home, expTiriHome, 'line-t-h');
-      renderBox('grid-tiri', away, expTiriAway, 'line-t-a');
-      renderBox('grid-tp', "MATCH IN PORTA", expTPHome+expTPAway, 'line-tp-match');
-      renderBox('grid-tp', home, expTPHome, 'line-tp-h');
-      renderBox('grid-tp', away, expTPAway, 'line-tp-a');
+    function updateSel() {
+      const h=document.getElementById('home'), a=document.getElementById('away'), r=document.getElementById('referee');
+      if(!h || !a || !r) return;
+      h.innerHTML=''; a.innerHTML=''; r.innerHTML='<option value="">Seleziona Arbitro</option>';
+      [...new Set(DB.fc.map(x=>x.Team))].sort().forEach(t => { h.add(new Option(t,t)); a.add(new Option(t,t)); });
+      [...new Set(DB.refs.map(x=>x.name))].sort().forEach(n => r.add(new Option(n,n))); // Fixed parenthesis
     }
-  } else { if(sec) sec.classList.add('hidden'); }
 
-  const resDiv = document.getElementById('results');
-  if(resDiv) { resDiv.classList.remove('hidden'); setTimeout(()=>resDiv.scrollIntoView({behavior:'smooth'}), 100); }
-}
+    function poisson(k, lambda) { return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k); }
+    function factorial(n) { if (n===0 || n===1) return 1; let r=1; for(let i=2; i<=n; i++) r*=i; return r; }
+    function poissonProb(line, lambda, type) {
+      let pUnder = 0; for(let k=0; k<=Math.floor(line); k++) pUnder += poisson(k, lambda);
+      return type==='OVER' ? (1-pUnder)*100 : pUnder*100;
+    }
 
-function renderBox(id, title, val, lineId) {
-  const el = document.getElementById(id);
-  if(!el) return;
-  if(title.includes("MATCH")) el.innerHTML=""; 
-  const line = parseFloat(document.getElementById(lineId).value)||24.5;
-  const diff = val - line;
-  let c="val-low", t="NO VALUE", r="PASS", prob=50;
-  
-  prob = poissonProb(line, val, diff>0?'OVER':'UNDER');
-  let badge = prob > 65 ? `<span class="confidence-pill">⚡ HIGH CONFIDENCE</span>` : "";
-  
-  if(diff>=1.5) { c="val-high"; t="SUPER VALORE"; r=`OVER ${line}`; }
-  else if(diff>=0.5) { c="val-med"; t="BUONO"; r=`OVER ${line}`; }
-  else if(diff<=-1.5) { c="val-high"; t="SUPER VALORE"; r=`UNDER ${line}`; }
-  else if(diff<=-0.5) { c="val-med"; t="BUONO"; r=`UNDER ${line}`; }
-  if(Math.abs(diff) < 0.5) { c="bg-slate-800 border-slate-700"; r="PASS"; t="NO EDGE"; prob=50; badge=""; }
+    function calculate() {
+      const home = document.getElementById('home').value;
+      const away = document.getElementById('away').value;
+      const ref = document.getElementById('referee').value;
+      if(!home || home===away || home==="Attendi...") return alert("Seleziona squadre e arbitro.");
 
-  el.innerHTML += `<div class="value-box ${c} relative">${badge}<div class="lbl" style="font-size:10px; opacity:0.8">${title}</div><div class="res">${r}</div><div style="font-size:12px; font-weight:bold">AI: ${val.toFixed(2)} | ${t}</div><div class="prob-badge">Prob. ${prob.toFixed(0)}%</div></div>`;
-}
-</script>
+      const getF = (t,loc,dc,dp) => {
+        const c = dc.find(x=>x.Team===t && x.Loc.includes(loc));
+        const p = dp.find(x=>x.Team===t && x.Loc.includes(loc));
+        if(!c) return {c:0,s:0};
+        return p ? {c:c.Comm*0.7+p.Comm*0.3, s:c.Sub*0.7+p.Sub*0.3} : {c:c.Comm, s:c.Sub};
+      };
+      const fH = getF(home,'CASA',DB.fc,DB.fp);
+      const fA = getF(away,'FUORI',DB.fc,DB.fp);
+      const rawTot = ((fH.c+fA.s)/2) + ((fA.c+fH.s)/2);
+      
+      let finalPred = rawTot;
+      let refInfo = "Ref: NO";
+      const rf = DB.refs.find(x=>x.name===ref);
+      if(rf && rf.avg > 0) { finalPred = (rawTot + rf.avg) / 2; refInfo = `Ref: ${rf.avg}`; }
+      
+      renderBox('grid-falli', "MATCH TOTALE", finalPred, 'line-f-match');
+      renderBox('grid-falli', home, ((fH.c+fA.s)/2), 'line-f-h');
+      renderBox('grid-falli', away, ((fA.c+fH.s)/2), 'line-f-a');
+      document.getElementById('title-falli').innerText = `Analisi Falli (${refInfo})`;
+
+      const sec = document.getElementById('sec-tiri');
+      if(CURRENT_LEAGUE==='SERIE_A' && DB.tiri.length > 0) {
+        sec.classList.remove('hidden');
+        const hStats = DB.tiri.find(x=>x.Team.toUpperCase()===home.toUpperCase());
+        const aStats = DB.tiri.find(x=>x.Team.toUpperCase()===away.toUpperCase());
+        const L = DB.tiriStats;
+        
+        if(hStats && aStats && L.avgHome > 0) {
+          const expTiriHome = (hStats.TFC * aStats.TSF) / L.avgAway;
+          const expTiriAway = (aStats.TFF * hStats.TSC) / L.avgHome;
+          const expTPHome = (hStats.TPC * aStats.TPSF) / L.avgAwayTP;
+          const expTPAway = (aStats.TPF * hStats.TPSC) / L.avgHomeTP;
+
+          renderBox('grid-tiri', "MATCH TOTALE", expTiriHome+expTiriAway, 'line-t-match');
+          renderBox('grid-tiri', home, expTiriHome, 'line-t-h');
+          renderBox('grid-tiri', away, expTiriAway, 'line-t-a');
+          renderBox('grid-tp', "MATCH IN PORTA", expTPHome+expTPAway, 'line-tp-match');
+          renderBox('grid-tp', home, expTPHome, 'line-tp-h');
+          renderBox('grid-tp', away, expTPAway, 'line-tp-a');
+        }
+      } else { if(sec) sec.classList.add('hidden'); }
+
+      const resDiv = document.getElementById('results');
+      if(resDiv) { resDiv.classList.remove('hidden'); setTimeout(()=>resDiv.scrollIntoView({behavior:'smooth'}), 100); }
+    }
+
+    function renderBox(id, title, val, lineId) {
+      const el = document.getElementById(id);
+      if(!el) return;
+      if(title.includes("MATCH")) el.innerHTML=""; 
+      const line = parseFloat(document.getElementById(lineId).value)||24.5;
+      const diff = val - line;
+      let c="val-low", t="NO VALUE", r="PASS", prob=50;
+      
+      prob = poissonProb(line, val, diff>0?'OVER':'UNDER');
+      let badge = prob > 65 ? `<span class="confidence-pill">⚡ HIGH CONFIDENCE</span>` : "";
+      
+      if(diff>=1.5) { c="val-high"; t="SUPER VALORE"; r=`OVER ${line}`; }
+      else if(diff>=0.5) { c="val-med"; t="BUONO"; r=`OVER ${line}`; }
+      else if(diff<=-1.5) { c="val-high"; t="SUPER VALORE"; r=`UNDER ${line}`; }
+      else if(diff<=-0.5) { c="val-med"; t="BUONO"; r=`UNDER ${line}`; }
+      if(Math.abs(diff) < 0.5) { c="bg-slate-800 border-slate-700"; r="PASS"; t="NO EDGE"; prob=50; badge=""; }
+
+      el.innerHTML += `<div class="value-box ${c} relative">${badge}<div class="lbl" style="font-size:10px; opacity:0.8">${title}</div><div class="res">${r}</div><div style="font-size:12px; font-weight:bold">AI: ${val.toFixed(2)} | ${t}</div><div class="prob-badge">Prob. ${prob.toFixed(0)}%</div></div>`;
+    }
+  </script>
 </body>
 </html>
-"""
-
-components.html(html_code, height=1200, scrolling=True)
