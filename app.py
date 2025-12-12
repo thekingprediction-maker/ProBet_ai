@@ -300,7 +300,7 @@ html_code = """
       if(!h || !a || !r) return;
       h.innerHTML=''; a.innerHTML=''; r.innerHTML='<option value="">Seleziona Arbitro</option>';
       [...new Set(DB.fc.map(x=>x.Team))].sort().forEach(t => { h.add(new Option(t,t)); a.add(new Option(t,t)); });
-      [...new Set(DB.refs.map(x=>x.name))].sort().forEach(n => r.add(new Option(n,n))); // Fixed parenthesis
+      [...new Set(DB.refs.map(x=>x.name))].sort().forEach(n => r.add(new Option(n,n));
     }
 
     function poisson(k, lambda) { return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k); }
@@ -384,3 +384,6 @@ html_code = """
   </script>
 </body>
 </html>
+"""
+
+components.html(html_code, height=1200, scrolling=True)
