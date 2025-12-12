@@ -4,48 +4,43 @@ import streamlit.components.v1 as components
 # --- CONFIGURAZIONE ---
 st.set_page_config(page_title="ProBet AI", layout="wide", initial_sidebar_state="collapsed")
 
-# CSS ESTREMO: RIMUOVE QUALSIASI FASCIA BIANCA
+# CSS "NUCLEARE" PER RIMUOVERE TUTTI I BORDI BIANCHI
 st.markdown("""
     <style>
-    /* Nasconde TUTTO quello che è di Streamlit in alto */
-    header[data-testid="stHeader"],
-    div[data-testid="stHeader"],
-    div[data-testid="stToolbar"],
-    .stDeployButton {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0px !important;
-        opacity: 0 !important;
-    }
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
     
-    /* Azzera i margini del contenitore principale */
+    /* Azzera padding e margini ovunque */
     .block-container {
         padding-top: 0rem !important;
         padding-bottom: 0rem !important;
         padding-left: 0rem !important;
         padding-right: 0rem !important;
-        margin-top: 0rem !important;
+        margin: 0 !important;
         max-width: 100% !important;
     }
     
-    /* Forza sfondo scuro ovunque per evitare flash bianchi */
-    .stApp {
-        background-color: #0f172a !important;
-        margin-top: 0 !important;
-    }
-    
+    /* Forza iframe a tutto schermo */
     iframe {
-        display: block !important;
         width: 100vw !important;
         height: 100vh !important;
         border: none !important;
-        margin: 0 !important;
-        padding: 0 !important;
+        display: block !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 9999;
+    }
+    
+    /* Nasconde header Streamlit se dovesse apparire */
+    div[data-testid="stHeader"] {
+        display: none !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- CODICE APP ---
+# --- CODICE APP COMPLETO ---
 html_code = """
 <!DOCTYPE html>
 <html lang="it">
@@ -70,7 +65,7 @@ html_code = """
   }
   .teko { font-family: 'Teko', sans-serif; }
   
-  /* MENU TENDINA */
+  /* MENU TENDINA LEGGIBILE */
   select { background-color: #1e293b; color: white; border: 1px solid #334155; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; appearance: none; outline: none; }
   select option { background-color: #1e293b; color: white; }
 
@@ -87,10 +82,7 @@ html_code = """
   .loader { width:14px; height:14px; border:2px solid #475569; border-bottom-color:#3b82f6; border-radius:50%; display:inline-block; animation:rotation 1s linear infinite; }
   @keyframes rotation { 0% { transform:rotate(0deg);} 100% { transform:rotate(360deg);} }
 
-  /* HEADER FISSO */
   header { position: fixed; top: 0; left: 0; width: 100%; z-index: 50; background-color: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #1e293b; }
-  
-  /* PADDING PER HEADER */
   main { padding-top: 80px; padding-bottom: 40px; padding-left: 16px; padding-right: 16px; max-width: 800px; margin: 0 auto; }
 </style>
 </head>
@@ -167,7 +159,7 @@ html_code = """
       <div id="grid-falli" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8"></div>
 
       <div id="sec-tiri" class="hidden">
-        <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="crosshair" class="text-blue-400 w-4 h-4"></i><span class="text-sm font-bold text-blue-400 uppercase tracking-widest">Tiri Totali (Strength Model)</span></div>
+        <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="crosshair" class="text-blue-400 w-4 h-4"></i><span class="text-sm font-bold text-blue-400 uppercase tracking-widest">Tiri Totali (Media Incrociata)</span></div>
         <div id="grid-tiri" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8"></div>
         <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="target" class="text-purple-400 w-4 h-4"></i><span class="text-sm font-bold text-purple-400 uppercase tracking-widest">Tiri In Porta</span></div>
         <div id="grid-tp" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
@@ -205,16 +197,12 @@ html_code = """
       const act="bg-blue-600 text-white shadow-lg", inact="text-slate-400 hover:bg-slate-800";
       document.getElementById('btn-sa').className = `flex-1 py-3 text-xs font-bold rounded-lg transition-all ${l==='SERIE_A'?act:inact}`;
       document.getElementById('btn-lg').className = `flex-1 py-3 text-xs font-bold rounded-lg transition-all ${l==='LIGA'?act:inact}`;
-      
       if(document.getElementById('box-tiri-lines')) {
           document.getElementById('box-tiri-lines').style.display = (l==='SERIE_A') ? 'block' : 'none';
       }
-      
-      // Reset
       document.getElementById('home').innerHTML = '<option>Caricamento...</option>';
       document.getElementById('away').innerHTML = '<option>Caricamento...</option>';
       document.getElementById('referee').innerHTML = '<option>Caricamento...</option>';
-      
       loadData();
     }
 
@@ -279,10 +267,8 @@ html_code = """
       const h=document.getElementById('home'), a=document.getElementById('away'), r=document.getElementById('referee');
       if(!h || !a || !r) return;
       h.innerHTML=''; a.innerHTML=''; r.innerHTML='<option value="">Seleziona Arbitro</option>';
-      
       const teams = new Set([ ...DB.fc.map(x=>x.Team), ...DB.tiri.map(x=>x.Team) ]);
       [...teams].sort().forEach(t => { h.add(new Option(t,t)); a.add(new Option(t,t)); });
-      
       [...new Set(DB.refs.map(x=>x.name))].sort().forEach(n => r.add(new Option(n,n)));
     }
 
@@ -324,13 +310,15 @@ html_code = """
         sec.classList.remove('hidden');
         const hStats = DB.tiri.find(x=>x.Team.toUpperCase()===home.toUpperCase());
         const aStats = DB.tiri.find(x=>x.Team.toUpperCase()===away.toUpperCase());
-        const L = DB.tiriStats;
         
-        if(hStats && aStats && L.avgHome > 0) {
-          const expTiriHome = (hStats.TFC * aStats.TSF) / L.avgAway;
-          const expTiriAway = (aStats.TFF * hStats.TSC) / L.avgHome;
-          const expTPHome = (hStats.TPC * aStats.TPSF) / L.avgAwayTP;
-          const expTPAway = (aStats.TPF * hStats.TPSC) / L.avgHomeTP;
+        if(hStats && aStats) {
+          // FORMULA CORRETTA (ALLINEATA A EXCEL): (Attacco + Difesa) / 2
+          // Evita moltiplicazioni che gonfiano i numeri
+          const expTiriHome = (hStats.TFC + aStats.TSF) / 2;
+          const expTiriAway = (aStats.TFF + hStats.TSC) / 2;
+          
+          const expTPHome = (hStats.TPC + aStats.TPSF) / 2;
+          const expTPAway = (aStats.TPF + hStats.TPSC) / 2;
 
           renderBox('grid-tiri', "MATCH TOTALE", expTiriHome+expTiriAway, 'line-t-match');
           renderBox('grid-tiri', home, expTiriHome, 'line-t-h');
