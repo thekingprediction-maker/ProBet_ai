@@ -4,25 +4,44 @@ import streamlit.components.v1 as components
 # --- CONFIGURAZIONE ---
 st.set_page_config(page_title="ProBet AI", layout="wide", initial_sidebar_state="collapsed")
 
+# CSS ESTREMO: RIMUOVE QUALSIASI FASCIA BIANCA
 st.markdown("""
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    /* Nasconde TUTTO quello che è di Streamlit in alto */
+    header[data-testid="stHeader"],
+    div[data-testid="stHeader"],
+    div[data-testid="stToolbar"],
+    .stDeployButton {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0px !important;
+        opacity: 0 !important;
+    }
     
-    /* RESET MARGINI E SCROLL */
+    /* Azzera i margini del contenitore principale */
     .block-container {
-        padding: 0 !important;
-        margin: 0 !important;
+        padding-top: 0rem !important;
+        padding-bottom: 0rem !important;
+        padding-left: 0rem !important;
+        padding-right: 0rem !important;
+        margin-top: 0rem !important;
         max-width: 100% !important;
     }
+    
+    /* Forza sfondo scuro ovunque per evitare flash bianchi */
+    .stApp {
+        background-color: #0f172a !important;
+        margin-top: 0 !important;
+    }
+    
     iframe {
+        display: block !important;
         width: 100vw !important;
         height: 100vh !important;
-        border: none;
-        display: block;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
-    div[data-testid="stHeader"] { display: none; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -40,14 +59,14 @@ html_code = """
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;600&family=Inter:wght@400;600;700;800&display=swap');
   
-  /* STILI BASE */
   html, body {
       background-color: #0f172a; 
       color: #e2e8f0; 
       font-family: 'Inter', sans-serif;
       margin: 0; padding: 0;
-      -webkit-tap-highlight-color: transparent;
+      width: 100%; height: 100%;
       overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
   }
   .teko { font-family: 'Teko', sans-serif; }
   
@@ -65,8 +84,6 @@ html_code = """
   .res { font-size:22px; font-weight:900; margin:2px 0; font-family:'Teko',sans-serif; line-height:1; }
   .prob-badge { font-size:10px; background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; display:inline-block; margin-top:4px; font-weight:700; }
   .confidence-pill { position:absolute; top:6px; right:6px; font-size:10px; background:#fff; color:#000; padding:3px 7px; border-radius:12px; font-weight:800; box-shadow:0 2px 4px rgba(0,0,0,0.2); }
-  
-  /* LOADER */
   .loader { width:14px; height:14px; border:2px solid #475569; border-bottom-color:#3b82f6; border-radius:50%; display:inline-block; animation:rotation 1s linear infinite; }
   @keyframes rotation { 0% { transform:rotate(0deg);} 100% { transform:rotate(360deg);} }
 
@@ -193,7 +210,7 @@ html_code = """
           document.getElementById('box-tiri-lines').style.display = (l==='SERIE_A') ? 'block' : 'none';
       }
       
-      // Reset dei dati visivi
+      // Reset
       document.getElementById('home').innerHTML = '<option>Caricamento...</option>';
       document.getElementById('away').innerHTML = '<option>Caricamento...</option>';
       document.getElementById('referee').innerHTML = '<option>Caricamento...</option>';
@@ -263,7 +280,6 @@ html_code = """
       if(!h || !a || !r) return;
       h.innerHTML=''; a.innerHTML=''; r.innerHTML='<option value="">Seleziona Arbitro</option>';
       
-      // Combina squadre da Falli e Tiri per sicurezza
       const teams = new Set([ ...DB.fc.map(x=>x.Team), ...DB.tiri.map(x=>x.Team) ]);
       [...teams].sort().forEach(t => { h.add(new Option(t,t)); a.add(new Option(t,t)); });
       
