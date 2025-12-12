@@ -38,7 +38,27 @@ html_code = """
   @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;600&family=Inter:wght@400;600;700;800&display=swap');
   body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; -webkit-font-smoothing:antialiased; }
   .teko { font-family: 'Teko', sans-serif; }
+  
   .input-dark { background:#1e293b; border:1px solid #334155; color:white; padding:8px; border-radius:6px; width:100%; text-align:center; font-weight:700; }
+  
+  /* FIX COLORI SELECT E OPTION */
+  select { 
+      background-color: #1e293b; 
+      color: white; 
+      border: 1px solid #334155; 
+      padding: 12px; 
+      border-radius: 8px; 
+      width: 100%; 
+      font-weight: bold; 
+      appearance: none; 
+      cursor: pointer;
+  }
+  /* Questo assicura che le opzioni nel menu a tendina siano leggibili */
+  select option {
+      background-color: #1e293b;
+      color: white;
+  }
+
   .value-box { padding:12px; border-radius:10px; margin-bottom:8px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.2); border:1px solid; position:relative; overflow:hidden; }
   .val-high { background: linear-gradient(135deg,#15803d 0%,#166534 100%); color:white; border-color:#22c55e; }
   .val-med { background: linear-gradient(135deg,#ca8a04 0%,#a16207 100%); color:#fff; border-color:#facc15; }
