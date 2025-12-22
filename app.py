@@ -168,7 +168,9 @@ html_code = """
   </main>
 
   <script>
-    const MASTER_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTR5vVYi1_EFk97GPmK8wOdZe6cImPcVYYEX-8rIlUyFg2EJjRspgcgBZ0cDAuVP--Aepi-wxEOdCOp/pub?output=csv";
+    // --- QUI C'È IL TUO NUOVO LINK GITHUB ---
+    const MASTER_URL = "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/CONFIG_APP%20-%20Foglio1.csv";
+    
     let CURRENT_LEAGUE = 'SERIE_A';
     const CONFIG = { SERIE_A: {}, LIGA: {} };
     const DB = { refs: [], fc: [], fp: [], tiri: [], tiriStats: {avgHome:0, avgAway:0, avgHomeTP:0, avgAwayTP:0} };
@@ -180,12 +182,17 @@ html_code = """
 
     async function initMasterConfig() {
       try {
-        const r = await fetch(MASTER_URL + "&t=" + Date.now());
+        // Modifica: Usa ?t= per i link GitHub puri che non hanno altri parametri
+        const r = await fetch(MASTER_URL + "?t=" + Date.now());
         const text = await r.text();
         const data = Papa.parse(text, { header: false, skipEmptyLines: true }).data;
+        
+        // Funzione helper per leggere i dati in modo sicuro
         const getL = (i) => (data[i] && data[i][1]) ? data[i][1].trim() : "";
+        
         CONFIG.SERIE_A = { arb: getL(0), curr: getL(1), prev: getL(2), tiri: getL(3) };
         CONFIG.LIGA = { arb: getL(4), curr: getL(5), prev: getL(6), tiri: "" }; 
+        
         const pill = document.getElementById('status-pill');
         if(pill) pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-emerald-400 text-[10px] font-bold">SYSTEM READY</span>`;
         switchLeague('SERIE_A');
@@ -212,6 +219,7 @@ html_code = """
       
       const fetchRaw = async (u) => { 
         if(!u) return ""; 
+        // Gestione intelligente della cache per GitHub
         try { const r = await fetch(u.includes('?')?u+'&t='+Date.now():u+'?t='+Date.now()); return await r.text(); } catch(e){return "";} 
       };
 
