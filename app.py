@@ -4,36 +4,15 @@ import streamlit.components.v1 as components
 # --- CONFIGURAZIONE ---
 st.set_page_config(page_title="ProBet AI", layout="wide", initial_sidebar_state="collapsed")
 
-# CSS "NUCLEARE" PER RIMUOVERE TUTTI I BORDI E FORZARE FULLSCREEN
+# CSS "NUCLEARE"
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    
-    /* Azzera padding e margini ovunque */
-    .block-container {
-        padding: 0 !important;
-        margin: 0 !important;
-        max-width: 100% !important;
-    }
-    
-    /* Forza iframe a tutto schermo */
-    iframe {
-        width: 100vw !important;
-        height: 100vh !important;
-        border: none !important;
-        display: block !important;
-        position: fixed;
-        top: 0;
-        left: 0;
-        z-index: 9999;
-    }
-    
-    /* Nasconde header Streamlit se dovesse apparire */
-    div[data-testid="stHeader"] {
-        display: none !important;
-    }
+    .block-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+    iframe { width: 100vw !important; height: 100vh !important; border: none !important; display: block !important; position: fixed; top: 0; left: 0; z-index: 9999; }
+    div[data-testid="stHeader"] { display: none !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -50,41 +29,24 @@ html_code = """
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;600&family=Inter:wght@400;600;700;800&display=swap');
-  
-  html, body {
-      background-color: #0f172a; 
-      color: #e2e8f0; 
-      font-family: 'Inter', sans-serif;
-      margin: 0; padding: 0;
-      width: 100%; height: 100%;
-      overflow-x: hidden;
-      -webkit-tap-highlight-color: transparent;
-  }
+  html, body { background-color: #0f172a; color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
   .teko { font-family: 'Teko', sans-serif; }
-  
-  /* MENU TENDINA LEGGIBILE */
   select { background-color: #1e293b; color: white; border: 1px solid #334155; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; appearance: none; outline: none; }
-  select option { background-color: #1e293b; color: white; }
-
   .input-dark { background:#1e293b; border:1px solid #334155; color:white; padding:8px; border-radius:6px; width:100%; text-align:center; font-weight:700; }
   .value-box { padding:12px; border-radius:10px; margin-bottom:8px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.2); border:1px solid; position:relative; overflow:hidden; }
-  
   .val-high { background: linear-gradient(135deg,#15803d 0%,#166534 100%); color:white; border-color:#22c55e; }
   .val-med { background: linear-gradient(135deg,#ca8a04 0%,#a16207 100%); color:#fff; border-color:#facc15; }
   .val-low { background: linear-gradient(135deg,#b91c1c 0%,#991b1b 100%); color:white; border-color:#ef4444; }
-  
   .res { font-size:22px; font-weight:900; margin:2px 0; font-family:'Teko',sans-serif; line-height:1; }
   .prob-badge { font-size:10px; background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; display:inline-block; margin-top:4px; font-weight:700; }
   .confidence-pill { position:absolute; top:6px; right:6px; font-size:10px; background:#fff; color:#000; padding:3px 7px; border-radius:12px; font-weight:800; box-shadow:0 2px 4px rgba(0,0,0,0.2); }
   .loader { width:14px; height:14px; border:2px solid #475569; border-bottom-color:#3b82f6; border-radius:50%; display:inline-block; animation:rotation 1s linear infinite; }
   @keyframes rotation { 0% { transform:rotate(0deg);} 100% { transform:rotate(360deg);} }
-
   header { position: fixed; top: 0; left: 0; width: 100%; z-index: 50; background-color: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #1e293b; }
   main { padding-top: 80px; padding-bottom: 40px; padding-left: 16px; padding-right: 16px; max-width: 800px; margin: 0 auto; }
 </style>
 </head>
 <body>
-
   <header>
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3"><div class="text-2xl font-bold teko text-white tracking-wide">PROBET <span class="text-blue-500">AI</span></div></div>
@@ -158,14 +120,14 @@ html_code = """
     <div id="results" class="hidden animate-fade-in pb-20">
       
       <div id="sec-falli">
-        <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="alert-circle" class="text-red-400 w-4 h-4"></i><span class="text-sm font-bold text-red-400 uppercase tracking-widest" id="title-falli">Analisi Falli</span></div>
+        <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="alert-circle" class="text-red-400 w-4 h-4"></i><span class="text-sm font-bold text-red-400 uppercase tracking-widest" id="title-falli">Analisi Falli (Poisson)</span></div>
         <div id="grid-falli" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8"></div>
       </div>
 
       <div id="sec-tiri" class="hidden">
-        <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="crosshair" class="text-blue-400 w-4 h-4"></i><span class="text-sm font-bold text-blue-400 uppercase tracking-widest">Tiri Totali (Media Incrociata)</span></div>
+        <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="crosshair" class="text-blue-400 w-4 h-4"></i><span class="text-sm font-bold text-blue-400 uppercase tracking-widest">Tiri Totali (Modello Poisson & Dati)</span></div>
         <div id="grid-tiri" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8"></div>
-        <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="target" class="text-purple-400 w-4 h-4"></i><span class="text-sm font-bold text-purple-400 uppercase tracking-widest">Tiri In Porta</span></div>
+        <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="target" class="text-purple-400 w-4 h-4"></i><span class="text-sm font-bold text-purple-400 uppercase tracking-widest">Tiri In Porta (Modello Poisson & Dati)</span></div>
         <div id="grid-tp" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
       </div>
     </div>
@@ -207,12 +169,10 @@ html_code = """
       CURRENT_LEAGUE = l;
       const act="bg-blue-600 text-white shadow-lg", inact="text-slate-400 hover:bg-slate-800";
       
-      // Update Buttons
       document.getElementById('btn-sa').className = `flex-1 py-3 text-xs font-bold rounded-lg transition-all ${l==='SERIE_A'?act:inact}`;
       document.getElementById('btn-pl').className = `flex-1 py-3 text-xs font-bold rounded-lg transition-all ${l==='PREMIER'?act:inact}`;
       document.getElementById('btn-lg').className = `flex-1 py-3 text-xs font-bold rounded-lg transition-all ${l==='LIGA'?act:inact}`;
       
-      // UI Logic
       const boxTiri = document.getElementById('box-tiri-lines');
       const boxFalli = document.getElementById('box-falli-lines');
       const boxRef = document.getElementById('ref-box');
@@ -247,10 +207,8 @@ html_code = """
       };
 
       try {
-        // Init DB
         DB.refs=[]; DB.fc=[]; DB.fp=[]; DB.tiri=[];
         
-        // Fetch Falli/Arbitri solo se esistono
         if(L.arb) {
             const tA = await fetchRaw(L.arb);
             if(tA) {
@@ -270,7 +228,6 @@ html_code = """
             DB.fc = parseF(tFc); DB.fp = parseF(tFp);
         }
 
-        // Fetch Tiri
         if(L.tiri) {
             const tTr = await fetchRaw(L.tiri);
             if(tTr && tTr.length>50) {
@@ -303,11 +260,8 @@ html_code = """
       const h=document.getElementById('home'), a=document.getElementById('away'), r=document.getElementById('referee');
       if(!h || !a || !r) return;
       h.innerHTML=''; a.innerHTML=''; r.innerHTML='<option value="">Seleziona Arbitro</option>';
-      
-      // Combina team da Falli e Tiri (così Premier mostra le squadre dai tiri)
       const teams = new Set([ ...DB.fc.map(x=>x.Team), ...DB.tiri.map(x=>x.Team) ]);
       [...teams].sort().forEach(t => { h.add(new Option(t,t)); a.add(new Option(t,t)); });
-      
       [...new Set(DB.refs.map(x=>x.name))].sort().forEach(n => r.add(new Option(n,n)));
     }
 
@@ -324,7 +278,6 @@ html_code = """
       
       if(!home || home===away || home==="Attendi...") return alert("Seleziona squadre valide.");
       
-      // Logica Falli (Serie A e Liga)
       if(CURRENT_LEAGUE !== 'PREMIER') {
           const ref = document.getElementById('referee').value;
           const getF = (t,loc,dc,dp) => {
@@ -351,7 +304,6 @@ html_code = """
           document.getElementById('sec-falli').classList.add('hidden');
       }
 
-      // Logica Tiri (Serie A e Premier) - USA GLI STESSI CALCOLI
       const secTiri = document.getElementById('sec-tiri');
       if((CURRENT_LEAGUE==='SERIE_A' || CURRENT_LEAGUE==='PREMIER') && DB.tiri.length > 0) {
         secTiri.classList.remove('hidden');
@@ -359,7 +311,6 @@ html_code = """
         const aStats = DB.tiri.find(x=>x.Team.toUpperCase()===away.toUpperCase());
         
         if(hStats && aStats) {
-          // CALCOLO MEDIA INCROCIATA (lo stesso per Serie A e Premier)
           const expTiriHome = (hStats.TFC + aStats.TSF) / 2;
           const expTiriAway = (aStats.TFF + hStats.TSC) / 2;
           
