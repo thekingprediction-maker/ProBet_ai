@@ -96,6 +96,7 @@ html_code = """
     <div class="flex justify-center mb-6">
       <div class="bg-slate-900 p-1 rounded-xl border border-slate-800 flex gap-2 w-full max-w-sm shadow-lg">
         <button onclick="switchLeague('SERIE_A')" id="btn-sa" class="flex-1 py-3 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-lg transition-all">SERIE A</button>
+        <button onclick="switchLeague('PREMIER')" id="btn-pl" class="flex-1 py-3 text-xs font-bold rounded-lg text-slate-400 hover:bg-slate-800 transition-all">PREMIER</button>
         <button onclick="switchLeague('LIGA')" id="btn-lg" class="flex-1 py-3 text-xs font-bold rounded-lg text-slate-400 hover:bg-slate-800 transition-all">LIGA</button>
       </div>
     </div>
@@ -104,7 +105,7 @@ html_code = """
       <div class="grid grid-cols-1 gap-4 mb-5">
         <div><label class="text-[10px] font-bold text-slate-500 uppercase ml-1">CASA</label><select id="home" class="mt-1"><option>Attendi...</option></select></div>
         <div><label class="text-[10px] font-bold text-slate-500 uppercase ml-1">OSPITE</label><select id="away" class="mt-1"><option>Attendi...</option></select></div>
-        <div><label class="text-[10px] font-bold text-slate-500 uppercase ml-1">ARBITRO</label><select id="referee" class="mt-1 text-yellow-400"><option>Attendi...</option></select></div>
+        <div id="ref-box"><label class="text-[10px] font-bold text-slate-500 uppercase ml-1">ARBITRO</label><select id="referee" class="mt-1 text-yellow-400"><option>Attendi...</option></select></div>
       </div>
 
       <hr class="border-slate-800 mb-5 opacity-50">
@@ -115,7 +116,8 @@ html_code = """
           <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
         </summary>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-          <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+          
+          <div id="box-falli-lines" class="bg-slate-950 p-3 rounded-lg border border-slate-800">
             <div class="text-[9px] font-bold text-red-400 uppercase mb-2 text-center border-b border-slate-800 pb-1">LINEE FALLI</div>
             <input type="number" id="line-f-match" value="24.5" step="0.5" class="input-dark mb-2 text-lg font-bold text-white">
             <div class="grid grid-cols-2 gap-2">
@@ -123,6 +125,7 @@ html_code = """
               <input type="number" id="line-f-a" value="11.5" class="input-dark text-xs" placeholder="Ospite">
             </div>
           </div>
+
           <div id="box-tiri-lines" class="bg-slate-950 p-3 rounded-lg border border-slate-800 md:col-span-2 hidden">
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -143,6 +146,7 @@ html_code = """
               </div>
             </div>
           </div>
+
         </div>
       </details>
 
@@ -152,8 +156,11 @@ html_code = """
     </div>
 
     <div id="results" class="hidden animate-fade-in pb-20">
-      <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="alert-circle" class="text-red-400 w-4 h-4"></i><span class="text-sm font-bold text-red-400 uppercase tracking-widest" id="title-falli">Analisi Falli</span></div>
-      <div id="grid-falli" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8"></div>
+      
+      <div id="sec-falli">
+        <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="alert-circle" class="text-red-400 w-4 h-4"></i><span class="text-sm font-bold text-red-400 uppercase tracking-widest" id="title-falli">Analisi Falli</span></div>
+        <div id="grid-falli" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8"></div>
+      </div>
 
       <div id="sec-tiri" class="hidden">
         <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="crosshair" class="text-blue-400 w-4 h-4"></i><span class="text-sm font-bold text-blue-400 uppercase tracking-widest">Tiri Totali (Media Incrociata)</span></div>
@@ -165,24 +172,27 @@ html_code = """
   </main>
 
   <script>
-    // --- I TUOI LINK GITHUB SONO STATI INSERITI QUI ---
     const DIRECT_LINKS = {
       SERIE_A: {
         arb:  "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/ARBITRI_SERIE_A%20-%20Foglio1.csv", 
         curr: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_CURR_SERIE_A%20-%20Foglio1.csv", 
         prev: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_PREV_SERIE_A%20-%20DATI%20STAGIONE%202024_2025%20.csv", 
-        tiri: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/TIRI_SERIE_A%20%20-%20DATI%20TIRI%20TOTALI%20E%20TIRI%20IN%20PORTA%20STAGIONE%202025_26.csv" 
+        tiri: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/TIRI_SERIE_A%20%20-%20DATI%20TIRI%20TOTALI%20E%20TIRI%20IN%20PORTA%20STAGIONE%202025_26.csv"
       },
       LIGA: {
         arb:  "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/ARBITRI_LIGA%20-%20Foglio1.csv", 
         curr: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_CURR_LIGA%20-%20Foglio1.csv", 
         prev: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_PREV_LIGA%20%20-%20DATI%20STAGIONE%202024_2025.csv", 
-        tiri: "" // La Liga non ha i tiri, lascio vuoto come previsto
+        tiri: ""
+      },
+      PREMIER: {
+        arb: "",
+        curr: "",
+        prev: "",
+        tiri: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/TIRI_PREMIER_LEAGUE%20-%20DATI%20TIRI%20TOTALI%20E%20TIRI%20IN%20PORTA%20STAGIONE%202025_26.csv"
       }
     };
 
-    // ------------------------------------
-    
     let CURRENT_LEAGUE = 'SERIE_A';
     const DB = { refs: [], fc: [], fp: [], tiri: [], tiriStats: {avgHome:0, avgAway:0, avgHomeTP:0, avgAwayTP:0} };
 
@@ -196,11 +206,31 @@ html_code = """
     function switchLeague(l) {
       CURRENT_LEAGUE = l;
       const act="bg-blue-600 text-white shadow-lg", inact="text-slate-400 hover:bg-slate-800";
+      
+      // Update Buttons
       document.getElementById('btn-sa').className = `flex-1 py-3 text-xs font-bold rounded-lg transition-all ${l==='SERIE_A'?act:inact}`;
+      document.getElementById('btn-pl').className = `flex-1 py-3 text-xs font-bold rounded-lg transition-all ${l==='PREMIER'?act:inact}`;
       document.getElementById('btn-lg').className = `flex-1 py-3 text-xs font-bold rounded-lg transition-all ${l==='LIGA'?act:inact}`;
-      if(document.getElementById('box-tiri-lines')) {
-          document.getElementById('box-tiri-lines').style.display = (l==='SERIE_A') ? 'block' : 'none';
+      
+      // UI Logic
+      const boxTiri = document.getElementById('box-tiri-lines');
+      const boxFalli = document.getElementById('box-falli-lines');
+      const boxRef = document.getElementById('ref-box');
+      
+      if(l === 'SERIE_A') {
+        boxTiri.style.display = 'block';
+        boxFalli.style.display = 'block';
+        boxRef.style.visibility = 'visible';
+      } else if (l === 'PREMIER') {
+        boxTiri.style.display = 'block';
+        boxFalli.style.display = 'none';
+        boxRef.style.visibility = 'hidden';
+      } else { // LIGA
+        boxTiri.style.display = 'none';
+        boxFalli.style.display = 'block';
+        boxRef.style.visibility = 'visible';
       }
+
       document.getElementById('home').innerHTML = '<option>Caricamento...</option>';
       document.getElementById('away').innerHTML = '<option>Caricamento...</option>';
       document.getElementById('referee').innerHTML = '<option>Caricamento...</option>';
@@ -209,25 +239,29 @@ html_code = """
 
     async function loadData() {
       const L = DIRECT_LINKS[CURRENT_LEAGUE];
-      if(!L || !L.arb) return;
+      if(!L) return;
       
       const fetchRaw = async (u) => { 
         if(!u) return ""; 
-        // Aggiungo ?t=Date.now() per evitare la cache vecchia e scaricare sempre i dati nuovi
         try { const r = await fetch(u.includes('?')?u+'&t='+Date.now():u+'?t='+Date.now()); return await r.text(); } catch(e){return "";} 
       };
 
       try {
-        const [tA, tFc, tFp] = await Promise.all([ fetchRaw(L.arb), fetchRaw(L.curr), fetchRaw(L.prev) ]);
+        // Init DB
+        DB.refs=[]; DB.fc=[]; DB.fp=[]; DB.tiri=[];
         
-        if(tA) {
-            const arbD = Papa.parse(tA, {header:false, skipEmptyLines:true}).data;
-            let start=0; if(arbD[0] && (String(arbD[0][0]).includes('Arbitro')||String(arbD[0][0]).includes('Media'))) start=1;
-            DB.refs = arbD.slice(start).map(r => ({name:cleanStr(r[0]), avg:cleanNum(r[2])})).filter(x=>x.name.length>2);
+        // Fetch Falli/Arbitri solo se esistono
+        if(L.arb) {
+            const tA = await fetchRaw(L.arb);
+            if(tA) {
+                const arbD = Papa.parse(tA, {header:false, skipEmptyLines:true}).data;
+                let start=0; if(arbD[0] && (String(arbD[0][0]).includes('Arbitro')||String(arbD[0][0]).includes('Media'))) start=1;
+                DB.refs = arbD.slice(start).map(r => ({name:cleanStr(r[0]), avg:cleanNum(r[2])})).filter(x=>x.name.length>2);
+            }
         }
-
-        if(tFc && tFp) {
-            const parseF = (txt) => {
+        if(L.curr && L.prev) {
+             const [tFc, tFp] = await Promise.all([ fetchRaw(L.curr), fetchRaw(L.prev) ]);
+             const parseF = (txt) => {
               if(!txt) return [];
               const d = Papa.parse(txt, {header:false, skipEmptyLines:true}).data;
               let s=0; for(let i=0;i<Math.min(5,d.length);i++) if(d[i].join(' ').toUpperCase().includes('SQUADRA')) s=i+1;
@@ -236,7 +270,7 @@ html_code = """
             DB.fc = parseF(tFc); DB.fp = parseF(tFp);
         }
 
-        DB.tiri = [];
+        // Fetch Tiri
         if(L.tiri) {
             const tTr = await fetchRaw(L.tiri);
             if(tTr && tTr.length>50) {
@@ -269,8 +303,11 @@ html_code = """
       const h=document.getElementById('home'), a=document.getElementById('away'), r=document.getElementById('referee');
       if(!h || !a || !r) return;
       h.innerHTML=''; a.innerHTML=''; r.innerHTML='<option value="">Seleziona Arbitro</option>';
+      
+      // Combina team da Falli e Tiri (così Premier mostra le squadre dai tiri)
       const teams = new Set([ ...DB.fc.map(x=>x.Team), ...DB.tiri.map(x=>x.Team) ]);
       [...teams].sort().forEach(t => { h.add(new Option(t,t)); a.add(new Option(t,t)); });
+      
       [...new Set(DB.refs.map(x=>x.name))].sort().forEach(n => r.add(new Option(n,n)));
     }
 
@@ -284,36 +321,45 @@ html_code = """
     function calculate() {
       const home = document.getElementById('home').value;
       const away = document.getElementById('away').value;
-      const ref = document.getElementById('referee').value;
-      if(!home || home===away || home==="Attendi...") return alert("Seleziona squadre e arbitro.");
-
-      const getF = (t,loc,dc,dp) => {
-        const c = dc.find(x=>x.Team===t && x.Loc.includes(loc));
-        const p = dp.find(x=>x.Team===t && x.Loc.includes(loc));
-        if(!c) return {c:0,s:0};
-        return p ? {c:c.Comm*0.7+p.Comm*0.3, s:c.Sub*0.7+p.Sub*0.3} : {c:c.Comm, s:c.Sub};
-      };
-      const fH = getF(home,'CASA',DB.fc,DB.fp);
-      const fA = getF(away,'FUORI',DB.fc,DB.fp);
-      const rawTot = ((fH.c+fA.s)/2) + ((fA.c+fH.s)/2);
       
-      let finalPred = rawTot;
-      let refInfo = "Ref: NO";
-      const rf = DB.refs.find(x=>x.name===ref);
-      if(rf && rf.avg > 0) { finalPred = (rawTot + rf.avg) / 2; refInfo = `Ref: ${rf.avg}`; }
+      if(!home || home===away || home==="Attendi...") return alert("Seleziona squadre valide.");
       
-      renderBox('grid-falli', "MATCH TOTALE", finalPred, 'line-f-match');
-      renderBox('grid-falli', home, ((fH.c+fA.s)/2), 'line-f-h');
-      renderBox('grid-falli', away, ((fA.c+fH.s)/2), 'line-f-a');
-      document.getElementById('title-falli').innerText = `Analisi Falli (${refInfo})`;
+      // Logica Falli (Serie A e Liga)
+      if(CURRENT_LEAGUE !== 'PREMIER') {
+          const ref = document.getElementById('referee').value;
+          const getF = (t,loc,dc,dp) => {
+            const c = dc.find(x=>x.Team===t && x.Loc.includes(loc));
+            const p = dp.find(x=>x.Team===t && x.Loc.includes(loc));
+            if(!c) return {c:0,s:0};
+            return p ? {c:c.Comm*0.7+p.Comm*0.3, s:c.Sub*0.7+p.Sub*0.3} : {c:c.Comm, s:c.Sub};
+          };
+          const fH = getF(home,'CASA',DB.fc,DB.fp);
+          const fA = getF(away,'FUORI',DB.fc,DB.fp);
+          const rawTot = ((fH.c+fA.s)/2) + ((fA.c+fH.s)/2);
+          
+          let finalPred = rawTot;
+          let refInfo = "Ref: NO";
+          const rf = DB.refs.find(x=>x.name===ref);
+          if(rf && rf.avg > 0) { finalPred = (rawTot + rf.avg) / 2; refInfo = `Ref: ${rf.avg}`; }
+          
+          renderBox('grid-falli', "MATCH TOTALE", finalPred, 'line-f-match');
+          renderBox('grid-falli', home, ((fH.c+fA.s)/2), 'line-f-h');
+          renderBox('grid-falli', away, ((fA.c+fH.s)/2), 'line-f-a');
+          document.getElementById('title-falli').innerText = `Analisi Falli (${refInfo})`;
+          document.getElementById('sec-falli').classList.remove('hidden');
+      } else {
+          document.getElementById('sec-falli').classList.add('hidden');
+      }
 
-      const sec = document.getElementById('sec-tiri');
-      if(CURRENT_LEAGUE==='SERIE_A' && DB.tiri.length > 0) {
-        sec.classList.remove('hidden');
+      // Logica Tiri (Serie A e Premier) - USA GLI STESSI CALCOLI
+      const secTiri = document.getElementById('sec-tiri');
+      if((CURRENT_LEAGUE==='SERIE_A' || CURRENT_LEAGUE==='PREMIER') && DB.tiri.length > 0) {
+        secTiri.classList.remove('hidden');
         const hStats = DB.tiri.find(x=>x.Team.toUpperCase()===home.toUpperCase());
         const aStats = DB.tiri.find(x=>x.Team.toUpperCase()===away.toUpperCase());
         
         if(hStats && aStats) {
+          // CALCOLO MEDIA INCROCIATA (lo stesso per Serie A e Premier)
           const expTiriHome = (hStats.TFC + aStats.TSF) / 2;
           const expTiriAway = (aStats.TFF + hStats.TSC) / 2;
           
@@ -327,7 +373,9 @@ html_code = """
           renderBox('grid-tp', home, expTPHome, 'line-tp-h');
           renderBox('grid-tp', away, expTPAway, 'line-tp-a');
         }
-      } else { if(sec) sec.classList.add('hidden'); }
+      } else { 
+          secTiri.classList.add('hidden'); 
+      }
 
       const resDiv = document.getElementById('results');
       if(resDiv) { resDiv.classList.remove('hidden'); setTimeout(()=>resDiv.scrollIntoView({behavior:'smooth'}), 100); }
