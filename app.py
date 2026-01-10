@@ -294,7 +294,6 @@ html_code = """
           let refInfo = "Ref: NO";
           const rf = DB.refs.find(x=>x.name===ref);
           
-          // MODIFICA: AGGIUNTO IL FATTORE SMOOTHING (0.6) - PIÙ SICURO
           if(rf && rf.avg > 0) { 
             let sumF = 0; let cnt = 0;
             if(DB.fc && DB.fc.length > 0) {
@@ -303,10 +302,12 @@ html_code = """
             const leagueAvg = cnt > 0 ? (sumF / cnt) * 2 : 24.5;
             
             const delta = rf.avg - leagueAvg;
-            const smoothing = 0.6; // FATTORE DI SMORZAMENTO A 0.6
-            finalPred = rawTot + (delta * smoothing); 
+            const smoothing = 0.6; 
+            const finalDelta = delta * smoothing; // Calcolo l'impatto finale
+            finalPred = rawTot + finalDelta; 
             
-            refInfo = `Ref: ${rf.avg} (Delta ${delta > 0 ? '+' : ''}${delta.toFixed(1)} * 0.6)`; 
+            // MODIFICA ESTETICA QUI: NIENTE PIÙ FORMULE, SOLO L'IMPATTO PULITO
+            refInfo = `Ref: ${rf.avg} (Impact: ${finalDelta > 0 ? '+' : ''}${finalDelta.toFixed(1)})`; 
           }
           
           renderBox('grid-falli', "MATCH TOTALE", finalPred, 'line-f-match');
