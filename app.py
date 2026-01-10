@@ -280,11 +280,12 @@ html_code = """
       
       if(CURRENT_LEAGUE !== 'PREMIER') {
           const ref = document.getElementById('referee').value;
+          // MODIFICA PESI A 80-20
           const getF = (t,loc,dc,dp) => {
             const c = dc.find(x=>x.Team===t && x.Loc.includes(loc));
             const p = dp.find(x=>x.Team===t && x.Loc.includes(loc));
             if(!c) return {c:0,s:0};
-            return p ? {c:c.Comm*0.7+p.Comm*0.3, s:c.Sub*0.7+p.Sub*0.3} : {c:c.Comm, s:c.Sub};
+            return p ? {c:c.Comm*0.8+p.Comm*0.2, s:c.Sub*0.8+p.Sub*0.2} : {c:c.Comm, s:c.Sub};
           };
           const fH = getF(home,'CASA',DB.fc,DB.fp);
           const fA = getF(away,'FUORI',DB.fc,DB.fp);
@@ -293,7 +294,14 @@ html_code = """
           let finalPred = rawTot;
           let refInfo = "Ref: NO";
           const rf = DB.refs.find(x=>x.name===ref);
-          if(rf && rf.avg > 0) { finalPred = (rawTot + rf.avg) / 2; refInfo = `Ref: ${rf.avg}`; }
+          
+          // MODIFICA ARBITRO CON METODO DELTA
+          if(rf && rf.avg > 0) { 
+            const leagueAvg = 24.5; 
+            const delta = rf.avg - leagueAvg;
+            finalPred = rawTot + delta; 
+            refInfo = `Ref: ${rf.avg} (Delta: ${delta > 0 ? '+' : ''}${delta.toFixed(1)})`; 
+          }
           
           renderBox('grid-falli', "MATCH TOTALE", finalPred, 'line-f-match');
           renderBox('grid-falli', home, ((fH.c+fA.s)/2), 'line-f-h');
