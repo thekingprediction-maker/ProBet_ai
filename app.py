@@ -295,12 +295,20 @@ html_code = """
           let refInfo = "Ref: NO";
           const rf = DB.refs.find(x=>x.name===ref);
           
-          // MODIFICA ARBITRO CON METODO DELTA
+          // MODIFICA ARBITRO CON METODO DELTA + MEDIA LEGA DINAMICA
           if(rf && rf.avg > 0) { 
-            const leagueAvg = 24.5; 
+            // Calcolo automatico media falli lega (somma falli commessi / numero squadre * 2)
+            let sumF = 0; let cnt = 0;
+            if(DB.fc && DB.fc.length > 0) {
+                DB.fc.forEach(x => { sumF += x.Comm; cnt++; });
+            }
+            // Se abbiamo dati, calcoliamo la media reale x 2 (perchè sono 2 squadre in campo)
+            // Altrimenti fallback a 24.5
+            const leagueAvg = cnt > 0 ? (sumF / cnt) * 2 : 24.5;
+            
             const delta = rf.avg - leagueAvg;
             finalPred = rawTot + delta; 
-            refInfo = `Ref: ${rf.avg} (Delta: ${delta > 0 ? '+' : ''}${delta.toFixed(1)})`; 
+            refInfo = `Ref: ${rf.avg} (Lega: ${leagueAvg.toFixed(1)} | Delta: ${delta > 0 ? '+' : ''}${delta.toFixed(1)})`; 
           }
           
           renderBox('grid-falli', "MATCH TOTALE", finalPred, 'line-f-match');
