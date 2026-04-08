@@ -4,15 +4,19 @@ import streamlit.components.v1 as components
 # --- CONFIGURAZIONE ---
 st.set_page_config(page_title="ProBet AI", layout="wide", initial_sidebar_state="collapsed")
 
-# CSS "NUCLEARE"
+# CSS "NUCLEARE" + PULIZIA TOTALE (Loghi, Barre, Spazi)
 st.markdown("""
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    /* Nasconde tutto quello che non è tua app */
+    [data-testid="stHeader"], header { display: none !important; }
+    footer { visibility: hidden !important; }
+    #MainMenu { visibility: hidden !important; }
+    .stDeployButton { display:none !important; }
+    #stDecoration { display:none !important; }
+    
+    /* Forza l'app a tutto schermo senza bordi bianchi */
     .block-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
     iframe { width: 100vw !important; height: 100vh !important; border: none !important; display: block !important; position: fixed; top: 0; left: 0; z-index: 9999; }
-    div[data-testid="stHeader"] { display: none !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -112,7 +116,7 @@ html_code = """
         </div>
       </details>
 
-      <button onclick="calculate()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-black text-xl rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95 transition-all flex justify-center items-center gap-2 transform active:scale-95 duration-100">
+      <button onclick="window.parent.location.href='https://probetai-7xsu6hzmlwqzsmcgtxphcs.streamlit.app/?ad='+Date.now(); calculate();" class="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-black text-xl rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95 transition-all flex justify-center items-center gap-2 transform active:scale-95 duration-100">
         <i data-lucide="zap" class="w-5 h-5 fill-white"></i> ANALIZZA DATI
       </button>
     </div>
@@ -303,10 +307,8 @@ html_code = """
             
             const delta = rf.avg - leagueAvg;
             const smoothing = 0.6; 
-            const finalDelta = delta * smoothing; // Calcolo l'impatto finale
+            const finalDelta = delta * smoothing;
             finalPred = rawTot + finalDelta; 
-            
-            // MODIFICA ESTETICA QUI: NIENTE PIÙ FORMULE, SOLO L'IMPATTO PULITO
             refInfo = `Ref: ${rf.avg} (Impact: ${finalDelta > 0 ? '+' : ''}${finalDelta.toFixed(1)})`; 
           }
           
@@ -323,52 +325,4 @@ html_code = """
       if((CURRENT_LEAGUE==='SERIE_A' || CURRENT_LEAGUE==='PREMIER') && DB.tiri.length > 0) {
         secTiri.classList.remove('hidden');
         const hStats = DB.tiri.find(x=>x.Team.toUpperCase()===home.toUpperCase());
-        const aStats = DB.tiri.find(x=>x.Team.toUpperCase()===away.toUpperCase());
-        
-        if(hStats && aStats) {
-          const expTiriHome = (hStats.TFC + aStats.TSF) / 2;
-          const expTiriAway = (aStats.TFF + hStats.TSC) / 2;
-          
-          const expTPHome = (hStats.TPC + aStats.TPSF) / 2;
-          const expTPAway = (aStats.TPF + hStats.TPSC) / 2;
-
-          renderBox('grid-tiri', "MATCH TOTALE", expTiriHome+expTiriAway, 'line-t-match');
-          renderBox('grid-tiri', home, expTiriHome, 'line-t-h');
-          renderBox('grid-tiri', away, expTiriAway, 'line-t-a');
-          renderBox('grid-tp', "MATCH IN PORTA", expTPHome+expTPAway, 'line-tp-match');
-          renderBox('grid-tp', home, expTPHome, 'line-tp-h');
-          renderBox('grid-tp', away, expTPAway, 'line-tp-a');
-        }
-      } else { 
-          secTiri.classList.add('hidden'); 
-      }
-
-      const resDiv = document.getElementById('results');
-      if(resDiv) { resDiv.classList.remove('hidden'); setTimeout(()=>resDiv.scrollIntoView({behavior:'smooth'}), 100); }
-    }
-
-    function renderBox(id, title, val, lineId) {
-      const el = document.getElementById(id);
-      if(!el) return;
-      if(title.includes("MATCH")) el.innerHTML=""; 
-      const line = parseFloat(document.getElementById(lineId).value)||24.5;
-      const diff = val - line;
-      let c="val-low", t="NO VALUE", r="PASS", prob=50;
-      
-      prob = poissonProb(line, val, diff>0?'OVER':'UNDER');
-      let badge = prob > 65 ? `<span class="confidence-pill">⚡ HIGH CONFIDENCE</span>` : "";
-      
-      if(diff>=1.5) { c="val-high"; t="SUPER VALORE"; r=`OVER ${line}`; }
-      else if(diff>=0.5) { c="val-med"; t="BUONO"; r=`OVER ${line}`; }
-      else if(diff<=-1.5) { c="val-high"; t="SUPER VALORE"; r=`UNDER ${line}`; }
-      else if(diff<=-0.5) { c="val-med"; t="BUONO"; r=`UNDER ${line}`; }
-      if(Math.abs(diff) < 0.5) { c="bg-slate-800 border-slate-700"; r="PASS"; t="NO EDGE"; prob=50; badge=""; }
-
-      el.innerHTML += `<div class="value-box ${c} relative">${badge}<div class="lbl" style="font-size:10px; opacity:0.8">${title}</div><div class="res">${r}</div><div style="font-size:12px; font-weight:bold">AI: ${val.toFixed(2)} | ${t}</div><div class="prob-badge">Prob. ${prob.toFixed(0)}%</div></div>`;
-    }
-  </script>
-</body>
-</html>
-"""
-
-components.html(html_code, height=1200, scrolling=True)
+       
