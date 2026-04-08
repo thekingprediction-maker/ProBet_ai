@@ -1,3 +1,4 @@
+
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -303,9 +304,10 @@ html_code = """
             
             const delta = rf.avg - leagueAvg;
             const smoothing = 0.6; 
-            const finalDelta = delta * smoothing; 
+            const finalDelta = delta * smoothing; // Calcolo l'impatto finale
             finalPred = rawTot + finalDelta; 
             
+            // MODIFICA ESTETICA QUI: NIENTE PIÙ FORMULE, SOLO L'IMPATTO PULITO
             refInfo = `Ref: ${rf.avg} (Impact: ${finalDelta > 0 ? '+' : ''}${finalDelta.toFixed(1)})`; 
           }
           
@@ -326,6 +328,4 @@ html_code = """
         
         if(hStats && aStats) {
           const expTiriHome = (hStats.TFC + aStats.TSF) / 2;
-          const expTiriAway = (aStats.TFF + hStats.TSC) / 2;
-          renderBox('grid-tiri', "MATCH TOTALE", expTiriHome+expTiriAway, 'line-t-match');
-     
+          const expTiriAway = 
