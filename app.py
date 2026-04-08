@@ -1,3 +1,4 @@
+
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -24,11 +25,11 @@ html_code = """
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>ProBet AI</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.tailwindcss.com "></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js "></script>
+<script src="https://unpkg.com/lucide@latest "></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;600&family=Inter:wght@400;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400 ;600&family=Inter:wght@400;600;700;800&display=swap');
   html, body { background-color: #0f172a; color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
   .teko { font-family: 'Teko', sans-serif; }
   select { background-color: #1e293b; color: white; border: 1px solid #334155; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; appearance: none; outline: none; }
@@ -136,22 +137,22 @@ html_code = """
   <script>
     const DIRECT_LINKS = {
       SERIE_A: {
-        arb:  "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/ARBITRI_SERIE_A%20-%20Foglio1.csv", 
-        curr: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_CURR_SERIE_A%20-%20Foglio1.csv", 
-        prev: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_PREV_SERIE_A%20-%20DATI%20STAGIONE%202024_2025%20.csv", 
-        tiri: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/TIRI_SERIE_A%20%20-%20DATI%20TIRI%20TOTALI%20E%20TIRI%20IN%20PORTA%20STAGIONE%202025_26.csv"
+        arb:  "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/ARBITRI_SERIE_A%20-%20Foglio1.csv ", 
+        curr: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_CURR_SERIE_A%20-%20Foglio1.csv ", 
+        prev: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_PREV_SERIE_A%20-%20DATI%20STAGIONE%202024_2025%20.csv ", 
+        tiri: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/TIRI_SERIE_A%20%20-%20DATI%20TIRI%20TOTALI%20E%20TIRI%20IN%20PORTA%20STAGIONE%202025_26.csv "
       },
       LIGA: {
-        arb:  "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/ARBITRI_LIGA%20-%20Foglio1.csv", 
-        curr: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_CURR_LIGA%20-%20Foglio1.csv", 
-        prev: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_PREV_LIGA%20%20-%20DATI%20STAGIONE%202024_2025.csv", 
+        arb:  "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/ARBITRI_LIGA%20-%20Foglio1.csv ", 
+        curr: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_CURR_LIGA%20-%20Foglio1.csv ", 
+        prev: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_PREV_LIGA%20%20-%20DATI%20STAGIONE%202024_2025.csv ", 
         tiri: ""
       },
       PREMIER: {
         arb: "",
         curr: "",
         prev: "",
-        tiri: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/TIRI_PREMIER_LEAGUE%20-%20DATI%20TIRI%20TOTALI%20E%20TIRI%20IN%20PORTA%20STAGIONE%202025_26.csv"
+        tiri: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/TIRI_PREMIER_LEAGUE%20-%20DATI%20TIRI%20TOTALI%20E%20TIRI%20IN%20PORTA%20STAGIONE%202025_26.csv "
       }
     };
 
@@ -327,4 +328,48 @@ html_code = """
         
         if(hStats && aStats) {
           const expTiriHome = (hStats.TFC + aStats.TSF) / 2;
-          const expTiriAway = 
+          const expTiriAway = (aStats.TFF + hStats.TSC) / 2;
+          
+          const expTPHome = (hStats.TPC + aStats.TPSF) / 2;
+          const expTPAway = (aStats.TPF + hStats.TPSC) / 2;
+
+          renderBox('grid-tiri', "MATCH TOTALE", expTiriHome+expTiriAway, 'line-t-match');
+          renderBox('grid-tiri', home, expTiriHome, 'line-t-h');
+          renderBox('grid-tiri', away, expTiriAway, 'line-t-a');
+          renderBox('grid-tp', "MATCH IN PORTA", expTPHome+expTPAway, 'line-tp-match');
+          renderBox('grid-tp', home, expTPHome, 'line-tp-h');
+          renderBox('grid-tp', away, expTPAway, 'line-tp-a');
+        }
+      } else { 
+          secTiri.classList.add('hidden'); 
+      }
+
+      const resDiv = document.getElementById('results');
+      if(resDiv) { resDiv.classList.remove('hidden'); setTimeout(()=>resDiv.scrollIntoView({behavior:'smooth'}), 100); }
+    }
+
+    function renderBox(id, title, val, lineId) {
+      const el = document.getElementById(id);
+      if(!el) return;
+      if(title.includes("MATCH")) el.innerHTML=""; 
+      const line = parseFloat(document.getElementById(lineId).value)||24.5;
+      const diff = val - line;
+      let c="val-low", t="NO VALUE", r="PASS", prob=50;
+      
+      prob = poissonProb(line, val, diff>0?'OVER':'UNDER');
+      let badge = prob > 65 ? `<span class="confidence-pill">⚡ HIGH CONFIDENCE</span>` : "";
+      
+      if(diff>=1.5) { c="val-high"; t="SUPER VALORE"; r=`OVER ${line}`; }
+      else if(diff>=0.5) { c="val-med"; t="BUONO"; r=`OVER ${line}`; }
+      else if(diff<=-1.5) { c="val-high"; t="SUPER VALORE"; r=`UNDER ${line}`; }
+      else if(diff<=-0.5) { c="val-med"; t="BUONO"; r=`UNDER ${line}`; }
+      if(Math.abs(diff) < 0.5) { c="bg-slate-800 border-slate-700"; r="PASS"; t="NO EDGE"; prob=50; badge=""; }
+
+      el.innerHTML += `<div class="value-box ${c} relative">${badge}<div class="lbl" style="font-size:10px; opacity:0.8">${title}</div><div class="res">${r}</div><div style="font-size:12px; font-weight:bold">AI: ${val.toFixed(2)} | ${t}</div><div class="prob-badge">Prob. ${prob.toFixed(0)}%</div></div>`;
+    }
+  </script>
+</body>
+</html>
+"""
+
+components.html(html_code, height=1200, scrolling=True)
