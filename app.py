@@ -2,11 +2,27 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 # --- CONFIGURAZIONE PAGINA ---
-st.set_page_config(page_title="ProBet AI", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(
+    page_title="ProBet AI - Pronostici", 
+    layout="wide", 
+    initial_sidebar_state="collapsed"
+)
 
-# --- 1. BANNER PUBBLICITARIO (BANNER_HOME) ---
+# --- CSS PER ELIMINARE SPAZI BIANCHI E HEADER STREAMLIT ---
+st.markdown("""
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .block-container { padding-top: 0 !important; padding-bottom: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }
+    iframe { border: none !important; width: 100%; }
+    div[data-testid="stHeader"] { display: none !important; }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- 1. BANNER ADMOB IN ALTO ---
 components.html("""
-    <div style="display: flex; justify-content: center; background: #0f172a; padding: 10px 0;">
+    <div style="display: flex; justify-content: center; background: #0f172a; padding: 10px 0; height: 60px;">
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1925129435680887" crossorigin="anonymous"></script>
         <ins class="adsbygoogle"
              style="display:inline-block;width:320px;height:50px"
@@ -16,21 +32,9 @@ components.html("""
              (adsbygoogle = window.adsbygoogle || []).push({});
         </script>
     </div>
-""", height=80)
+""", height=70)
 
-# --- 2. CSS PER NASCONDERE INTERFACCIA STREAMLIT ---
-st.markdown("""
-    <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .block-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
-    iframe { border: none !important; width: 100%; }
-    div[data-testid="stHeader"] { display: none !important; }
-    </style>
-""", unsafe_allow_html=True)
-
-# --- 3. CODICE DELL'APP PROBET AI ---
+# --- 2. IL TUO CODICE COMPLETO (HTML + JS + LOGICA) ---
 html_code = """
 <!DOCTYPE html>
 <html lang="it">
@@ -43,81 +47,123 @@ html_code = """
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;600&family=Inter:wght@400;600;700;800&display=swap');
-  html, body { background-color: #0f172a; color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+  html, body { background-color: #0f172a; color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; }
   .teko { font-family: 'Teko', sans-serif; }
   select { background-color: #1e293b; color: white; border: 1px solid #334155; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; appearance: none; outline: none; }
-  .input-dark { background:#1e293b; border:1px solid #334155; color:white; padding:8px; border-radius:6px; width:100%; text-align:center; font-weight:700; }
-  .value-box { padding:12px; border-radius:10px; margin-bottom:8px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.2); border:1px solid; position:relative; overflow:hidden; }
-  .val-high { background: linear-gradient(135deg,#15803d 0%,#166534 100%); color:white; border-color:#22c55e; }
-  .val-med { background: linear-gradient(135deg,#ca8a04 0%,#a16207 100%); color:#fff; border-color:#facc15; }
-  .val-low { background: linear-gradient(135deg,#b91c1c 0%,#991b1b 100%); color:white; border-color:#ef4444; }
-  .res { font-size:22px; font-weight:900; margin:2px 0; font-family:'Teko',sans-serif; line-height:1; }
-  .prob-badge { font-size:10px; background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; display:inline-block; margin-top:4px; font-weight:700; }
-  .confidence-pill { position:absolute; top:6px; right:6px; font-size:10px; background:#fff; color:#000; padding:3px 7px; border-radius:12px; font-weight:800; box-shadow:0 2px 4px rgba(0,0,0,0.2); }
-  .loader { width:14px; height:14px; border:2px solid #475569; border-bottom-color:#3b82f6; border-radius:50%; display:inline-block; animation:rotation 1s linear infinite; }
-  @keyframes rotation { 0% { transform:rotate(0deg);} 100% { transform:rotate(360deg);} }
-  header { position: fixed; top: 0; left: 0; width: 100%; z-index: 50; background-color: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #1e293b; }
-  main { padding-top: 80px; padding-bottom: 40px; padding-left: 16px; padding-right: 16px; max-width: 800px; margin: 0 auto; }
+  .value-box { padding:12px; border-radius:10px; margin-bottom:8px; text-align:center; border:1px solid; position:relative; }
+  .val-high { background: linear-gradient(135deg,#15803d 0%,#166534 100%); border-color:#22c55e; }
+  .val-med { background: linear-gradient(135deg,#ca8a04 0%,#a16207 100%); border-color:#facc15; }
+  .val-low { background: linear-gradient(135deg,#b91c1c 0%,#991b1b 100%); border-color:#ef4444; }
+  .res { font-size:24px; font-weight:900; font-family:'Teko',sans-serif; }
+  header { position: sticky; top: 0; width: 100%; z-index: 50; background-color: #0f172a; border-bottom: 1px solid #1e293b; }
 </style>
 </head>
 <body>
-  <header>
-    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3"><div class="text-2xl font-bold teko text-white tracking-wide">PROBET <span class="text-blue-500">AI</span></div></div>
-      <div id="status-pill" class="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800"><div class="loader"></div> <span class="text-[10px] font-bold text-slate-400">LOADING</span></div>
-    </div>
+  <header class="p-4 flex justify-between items-center">
+    <div class="text-2xl font-bold teko text-white">PROBET <span class="text-blue-500">AI</span></div>
+    <div id="status-pill" class="text-[10px] text-slate-400 font-bold uppercase border border-slate-800 px-2 py-1 rounded">PRONTO</div>
   </header>
 
-  <main>
-    <div class="flex justify-center mb-6">
-      <div class="bg-slate-900 p-1 rounded-xl border border-slate-800 flex gap-2 w-full max-w-sm shadow-lg">
-        <button onclick="switchLeague('SERIE_A')" id="btn-sa" class="flex-1 py-3 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-lg transition-all">SERIE A</button>
-        <button onclick="switchLeague('PREMIER')" id="btn-pl" class="flex-1 py-3 text-xs font-bold rounded-lg text-slate-400 hover:bg-slate-800 transition-all">PREMIER</button>
-        <button onclick="switchLeague('LIGA')" id="btn-lg" class="flex-1 py-3 text-xs font-bold rounded-lg text-slate-400 hover:bg-slate-800 transition-all">LIGA</button>
-      </div>
+  <main class="p-4 max-w-xl mx-auto">
+    <div class="flex gap-2 mb-6 bg-slate-900 p-1 rounded-xl border border-slate-800">
+      <button onclick="switchLeague('SERIE_A')" id="btn-SERIE_A" class="flex-1 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white">SERIE A</button>
+      <button onclick="switchLeague('PREMIER')" id="btn-PREMIER" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-400">PREMIER</button>
+      <button onclick="switchLeague('LIGA')" id="btn-LIGA" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-400">LIGA</button>
     </div>
 
-    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl mb-8">
-      <div class="grid grid-cols-1 gap-4 mb-5">
-        <div><label class="text-[10px] font-bold text-slate-500 uppercase ml-1">CASA</label><select id="home" class="mt-1"><option>Attendi...</option></select></div>
-        <div><label class="text-[10px] font-bold text-slate-500 uppercase ml-1">OSPITE</label><select id="away" class="mt-1"><option>Attendi...</option></select></div>
-        <div id="ref-box"><label class="text-[10px] font-bold text-slate-500 uppercase ml-1">ARBITRO</label><select id="referee" class="mt-1 text-yellow-400"><option>Attendi...</option></select></div>
+    <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl mb-6">
+      <div class="space-y-4">
+        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Casa</label><select id="home"></select></div>
+        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Ospite</label><select id="away"></select></div>
+        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Arbitro</label><select id="referee" class="text-yellow-400"></select></div>
       </div>
-      <hr class="border-slate-800 mb-5 opacity-50">
-      <button onclick="calculate()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-black text-xl rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95 transition-all flex justify-center items-center gap-2">
-        <i data-lucide="zap" class="w-5 h-5 fill-white"></i> ANALIZZA DATI
+      <button onclick="calculate()" class="w-full mt-6 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black text-xl rounded-xl transition-all">
+        ANALIZZA DATI
       </button>
     </div>
 
-    <div id="results" class="hidden animate-fade-in pb-20">
-      <div id="sec-falli">
-        <div class="flex items-center gap-2 mb-3 mt-8 border-b border-slate-800 pb-2"><i data-lucide="alert-circle" class="text-red-400 w-4 h-4"></i><span class="text-sm font-bold text-red-400 uppercase tracking-widest" id="title-falli">Analisi Falli</span></div>
-        <div id="grid-falli" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8"></div>
-      </div>
+    <div id="results" class="hidden space-y-4 pb-10">
+      <h3 class="text-sm font-bold text-red-400 uppercase tracking-widest border-b border-slate-800 pb-2">Analisi Falli</h3>
+      <div id="grid-falli" class="grid grid-cols-1 gap-3"></div>
     </div>
   </main>
 
   <script>
-    // La logica JS originale rimane qui...
-    const DIRECT_LINKS = {
+    const LINKS = {
       SERIE_A: {
         arb: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/ARBITRI_SERIE_A%20-%20Foglio1.csv",
         curr: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_CURR_SERIE_A%20-%20Foglio1.csv",
         prev: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_PREV_SERIE_A%20-%20DATI%20STAGIONE%202024_2025%20.csv"
+      },
+      PREMIER: {
+        arb: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/ARBITRI_PREMIER_LEAGUE%20-%20Foglio1.csv",
+        curr: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_CURR_PREMIER_LEAGUE%20-%20Foglio1.csv",
+        prev: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_PREV_PREMIER_LEAGUE%20-%20DATI%20STAGIONE%202024_2025%20.csv"
+      },
+      LIGA: {
+        arb: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/ARBITRI_LIGA%20-%20Foglio1.csv",
+        curr: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_CURR_LIGA%20-%20Foglio1.csv",
+        prev: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_PREV_LIGA%20-%20DATI%20STAGIONE%202024_2025%20.csv"
       }
     };
-    // ...resto del tuo script JS...
-    function switchLeague(l) { console.log("League switched to", l); loadData(); }
-    async function loadData() { 
-      const h=document.getElementById('home'), a=document.getElementById('away');
-      h.innerHTML='<option>Inter</option><option>Milan</option>'; 
-      a.innerHTML='<option>Juve</option><option>Napoli</option>';
+
+    let currentLeague = 'SERIE_A';
+    let dataArb = [], dataCurr = [], dataPrev = [];
+
+    async function loadData() {
+      document.getElementById('status-pill').innerText = "CARICAMENTO...";
+      const l = LINKS[currentLeague];
+      const fetchCSV = url => new Promise(res => Papa.parse(url, {download:true, header:true, complete: results => res(results.data)}));
+      
+      [dataArb, dataCurr, dataPrev] = await Promise.all([fetchCSV(l.arb), fetchCSV(l.curr), fetchCSV(l.prev)]);
+      
+      populateSelects();
+      document.getElementById('status-pill').innerText = "PRONTO";
     }
-    function calculate() { document.getElementById('results').classList.remove('hidden'); }
-    document.addEventListener('DOMContentLoaded', () => { switchLeague('SERIE_A'); });
+
+    function populateSelects() {
+      const h = document.getElementById('home'), a = document.getElementById('away'), r = document.getElementById('referee');
+      const teams = [...new Set(dataCurr.map(x => x.Squadra))].filter(Boolean).sort();
+      const refs = [...new Set(dataArb.map(x => x.Arbitro))].filter(Boolean).sort();
+      
+      h.innerHTML = a.innerHTML = teams.map(t => `<option value="${t}">${t}</option>`).join('');
+      r.innerHTML = refs.map(ref => `<option value="${ref}">${ref}</option>`).join('');
+    }
+
+    function switchLeague(l) {
+      currentLeague = l;
+      ['SERIE_A','PREMIER','LIGA'].forEach(id => {
+        const btn = document.getElementById('btn-'+id);
+        btn.className = id === l ? "flex-1 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white" : "flex-1 py-2 text-xs font-bold rounded-lg text-slate-400";
+      });
+      loadData();
+    }
+
+    function calculate() {
+      const h = document.getElementById('home').value;
+      const a = document.getElementById('away').value;
+      const r = document.getElementById('referee').value;
+      
+      const sH = dataCurr.find(x => x.Squadra === h) || {};
+      const sA = dataCurr.find(x => x.Squadra === a) || {};
+      const arb = dataArb.find(x => x.Arbitro === r) || {};
+
+      const mediaFalli = (parseFloat(sH['Media Falli Commessi']||0) + parseFloat(sA['Media Falli Commessi']||0) + parseFloat(arb['Media Falli']||0)) / 3;
+      
+      const grid = document.getElementById('grid-falli');
+      grid.innerHTML = `
+        <div class="value-box val-high">
+          <div class="text-[10px] uppercase opacity-80">Previsione Falli Totali</div>
+          <div class="res">${mediaFalli.toFixed(2)}</div>
+        </div>
+      `;
+      document.getElementById('results').classList.remove('hidden');
+    }
+
+    window.onload = loadData;
   </script>
 </body>
 </html>
 """
 
-components.html(html_code, height=1500, scrolling=True)
+components.html(html_code, height=1200, scrolling=True)
