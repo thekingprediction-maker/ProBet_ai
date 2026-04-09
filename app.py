@@ -1,86 +1,89 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# --- CONFIGURAZIONE PAGINA ---
+# --- CONFIGURAZIONE ---
 st.set_page_config(page_title="ProBet AI", layout="wide", initial_sidebar_state="collapsed")
 
+# CSS per nascondere gli elementi di Streamlit e rendere l'iframe a tutto schermo
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    .block-container { padding: 0 !important; margin: 0 !important; }
+    .block-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
     iframe { width: 100vw !important; height: 100vh !important; border: none !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- CODICE HTML + JS + LOGICA CALCOLO ---
-html_all_in_one = """
+# --- CODICE HTML COMPLETO (TUA GRAFICA + TUOI CALCOLI) ---
+html_code = """
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>ProBet AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Teko:wght@600&family=Inter:wght@400;700;900&display=swap');
-        body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; padding-bottom: 50px; }
-        .teko { font-family: 'Teko', sans-serif; text-transform: uppercase; }
-        .input-dark { background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; }
-        .btn-league { flex: 1; py: 3; font-weight: bold; border-radius: 8px; transition: 0.3s; font-size: 12px; }
-        .active-l { background: #3b82f6; color: white; }
-        .inactive-l { background: #1e293b; color: #94a3b8; }
-        .card { background: #1e293b; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #334155; }
-        .val-box { padding: 15px; border-radius: 12px; text-align: center; font-weight: bold; border: 1px solid rgba(255,255,255,0.1); }
-        .over { background: linear-gradient(135deg, #166534, #14532d); border-color: #22c55e; }
-        .under { background: linear-gradient(135deg, #991b1b, #7f1d1d); border-color: #ef4444; }
+        @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;600&family=Inter:wght@400;600;700;800&display=swap');
+        html, body { background-color: #0f172a; color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; }
+        .teko { font-family: 'Teko', sans-serif; }
+        select { background-color: #1e293b; color: white; border: 1px solid #334155; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; outline: none; }
+        .input-dark { background:#1e293b; border:1px solid #334155; color:white; padding:8px; border-radius:6px; width:100%; text-align:center; font-weight:700; }
+        .value-box { padding:12px; border-radius:10px; margin-bottom:8px; text-align:center; border:1px solid; position:relative; }
+        .val-high { background: linear-gradient(135deg,#15803d 0%,#166534 100%); color:white; border-color:#22c55e; }
+        .val-low { background: linear-gradient(135deg,#b91c1c 0%,#991b1b 100%); color:white; border-color:#ef4444; }
+        .res { font-size:24px; font-weight:900; font-family:'Teko',sans-serif; }
     </style>
 </head>
 <body>
-
-    <div id="ad-top" class="w-full flex justify-center py-2 min-h-[50px] bg-slate-900/50 mb-4">
-        <span class="text-[10px] text-slate-500">PUBBLICITÀ</span>
+    <div style="width:100%; text-align:center; min-height:50px; background:#000; color:#444; font-size:10px; padding:5px;">
+        PUBBLICITÀ ADMOB
     </div>
 
-    <div class="px-4 max-w-md mx-auto">
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-3xl teko tracking-widest">PROBET <span class="text-blue-500">AI</span></h1>
-            <div id="status" class="text-[10px] bg-slate-800 px-2 py-1 rounded">CARICAMENTO...</div>
-        </div>
+    <header class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <div class="text-2xl font-bold teko text-white tracking-wide">PROBET <span class="text-blue-500">AI</span></div>
+        <div id="status-pill" class="text-[10px] font-bold text-slate-400 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">LOADING...</div>
+    </header>
 
+    <main class="p-4 max-w-2xl mx-auto">
         <div class="flex gap-2 mb-6">
-            <button onclick="changeLeague('SERIE_A')" id="btn-SERIE_A" class="btn-league active-l p-3">SERIE A</button>
-            <button onclick="changeLeague('PREMIER')" id="btn-PREMIER" class="btn-league inactive-l p-3">PREMIER</button>
-            <button onclick="changeLeague('LIGA')" id="btn-LIGA" class="btn-league inactive-l p-3">LIGA</button>
+            <button onclick="switchLeague('SERIE_A')" id="btn-sa" class="flex-1 py-3 text-xs font-bold rounded-lg bg-blue-600 text-white">SERIE A</button>
+            <button onclick="switchLeague('PREMIER')" id="btn-pl" class="flex-1 py-3 text-xs font-bold rounded-lg bg-slate-900 text-slate-400">PREMIER</button>
+            <button onclick="switchLeague('LIGA')" id="btn-lg" class="flex-1 py-3 text-xs font-bold rounded-lg bg-slate-900 text-slate-400">LIGA</button>
         </div>
 
-        <div class="card">
-            <div class="mb-4">
-                <label class="text-[10px] font-bold text-slate-400">SQUADRA CASA</label>
-                <select id="home" class="input-dark mt-1"></select>
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl mb-6">
+            <div class="space-y-4 mb-6">
+                <div><label class="text-[10px] font-bold text-slate-500 uppercase ml-1">CASA</label><select id="home"></select></div>
+                <div><label class="text-[10px] font-bold text-slate-500 uppercase ml-1">OSPITE</label><select id="away"></select></div>
+                <div id="ref-box"><label class="text-[10px] font-bold text-slate-500 uppercase ml-1 text-yellow-500">ARBITRO</label><select id="referee" class="border-yellow-900"></select></div>
             </div>
-            <div class="mb-4">
-                <label class="text-[10px] font-bold text-slate-400">SQUADRA OSPITE</label>
-                <select id="away" class="input-dark mt-1"></select>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="p-3 bg-black/20 rounded-lg border border-slate-800">
+                    <label class="text-[9px] font-bold text-slate-500 block mb-1">LINEA FALLI</label>
+                    <input type="number" id="line-f" value="24.5" step="0.5" class="input-dark">
+                </div>
+                <div class="p-3 bg-black/20 rounded-lg border border-slate-800">
+                    <label class="text-[9px] font-bold text-slate-500 block mb-1">LINEA TIRI</label>
+                    <input type="number" id="line-t" value="23.5" step="0.5" class="input-dark">
+                </div>
             </div>
-            <div id="ref-div" class="mb-2">
-                <label class="text-[10px] font-bold text-slate-400 text-yellow-500">ARBITRO (MEDIA FALLI)</label>
-                <select id="ref" class="input-dark mt-1 border-yellow-500/30"></select>
-            </div>
+
+            <button onclick="analyze()" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black text-xl rounded-xl shadow-lg active:scale-95 transition-all">
+                ANALIZZA DATI
+            </button>
         </div>
 
-        <button onclick="startAnalysis()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-black text-lg shadow-lg active:scale-95 transition-all mb-8">
-            ANALIZZA DATI
-        </button>
-
-        <div id="results" class="hidden space-y-4">
-            <h3 class="teko text-xl text-blue-400 border-b border-slate-700">PREVISIONE AI</h3>
-            <div id="results-content" class="grid grid-cols-1 gap-3"></div>
+        <div id="results" class="hidden animate-fade-in space-y-4 pb-20">
+            <div class="text-sm font-bold text-blue-400 border-b border-slate-800 pb-2 uppercase tracking-widest">Previsione AI</div>
+            <div id="grid-results" class="grid grid-cols-1 gap-3"></div>
         </div>
-    </div>
+    </main>
 
     <script>
         const LINKS = {
@@ -90,137 +93,109 @@ html_all_in_one = """
                 prev: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_PREV_SERIE_A%20-%20DATI%20STAGIONE%202024_2025%20.csv",
                 tiri: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/TIRI_SERIE_A%20%20-%20DATI%20TIRI%20TOTALI%20E%20TIRI%20IN%20PORTA%20STAGIONE%202025_26.csv"
             },
-            PREMIER: {
-                tiri: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/TIRI_PREMIER_LEAGUE%20-%20DATI%20TIRI%20TOTALI%20E%20TIRI%20IN%20PORTA%20STAGIONE%202025_26.csv"
-            },
             LIGA: {
                 arb: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/ARBITRI_LIGA%20-%20Foglio1.csv",
                 curr: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_CURR_LIGA%20-%20Foglio1.csv",
-                prev: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_PREV_LIGA%20%20-%20DATI%20STAGIONE%202024_2025.csv"
+                prev: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/FALLI_PREV_LIGA%20%20-%20DATI%20STAGIONE%202024_2025.csv",
+                tiri: ""
+            },
+            PREMIER: {
+                tiri: "https://raw.githubusercontent.com/thekingprediction-maker/Server_probetai/refs/heads/main/TIRI_PREMIER_LEAGUE%20-%20DATI%20TIRI%20TOTALI%20E%20TIRI%20IN%20PORTA%20STAGIONE%202025_26.csv"
             }
         };
 
         let currentLeague = 'SERIE_A';
-        let db = { falli: [], tiri: [], arbitri: [] };
+        let database = { refs: [], falli: [], tiri: [] };
 
-        async function load() {
-            document.getElementById('status').innerText = "CARICAMENTO...";
+        async function loadData() {
             const L = LINKS[currentLeague];
-            
             try {
-                // Carica Arbitri
                 if(L.arb) {
-                    const res = await fetch(L.arb);
-                    const txt = await res.text();
-                    db.arbitri = Papa.parse(txt).data.slice(1).map(r => ({n: r[0], m: parseFloat(String(r[2]).replace(',','.')) || 0})).filter(x=>x.n);
+                    const r = await fetch(L.arb); const t = await r.text();
+                    database.refs = Papa.parse(t).data.slice(1).map(x => ({n: x[0], m: parseFloat(x[2])||0})).filter(x=>x.n);
                 }
-                
-                // Carica Falli (Corrente + Precedente per media pesata)
                 if(L.curr) {
-                    const res = await fetch(L.curr);
-                    const txt = await res.text();
-                    db.falli = Papa.parse(txt).data.slice(1).map(r => ({t: r[1], l: r[2], sub: parseFloat(r[3])||0, comm: parseFloat(r[4])||0})).filter(x=>x.t);
+                    const r = await fetch(L.curr); const t = await r.text();
+                    database.falli = Papa.parse(t).data.slice(1).map(x => ({t: x[1], l: x[2], c: parseFloat(x[4])||0, s: parseFloat(x[3])||0})).filter(x=>x.t);
                 }
-
-                // Carica Tiri (Logica specifica per saltare intestazioni sporche)
                 if(L.tiri) {
-                    const res = await fetch(L.tiri);
-                    const txt = await res.text();
-                    const raw = Papa.parse(txt).data;
-                    const startIdx = raw.findIndex(r => r[0] && r[0].includes("Squadra")) + 1;
-                    db.tiri = raw.slice(startIdx).map(r => ({
-                        t: r[0],
-                        tc: (parseFloat(r[2])/parseFloat(r[1]))||0, // Tiri fatti casa / partite
-                        tsf: (parseFloat(r[8])/parseFloat(r[6]))||0, // Tiri subiti fuori / partite
-                        tpc: (parseFloat(r[4])/parseFloat(r[1]))||0, // In porta fatti casa
-                        tpsf: (parseFloat(r[10])/parseFloat(r[6]))||0 // In porta subiti fuori
+                    const r = await fetch(L.tiri); const t = await r.text();
+                    const rd = Papa.parse(t).data;
+                    const start = rd.findIndex(x => x[0] && x[0].includes("Squadra")) + 1;
+                    database.tiri = rd.slice(start).map(x => ({
+                        t: x[0],
+                        tc: (parseFloat(x[2])/parseFloat(x[1]))||0,
+                        tsf: (parseFloat(x[8])/parseFloat(x[6]))||0,
+                        tpc: (parseFloat(x[4])/parseFloat(x[1]))||0,
+                        tpsf: (parseFloat(x[10])/parseFloat(x[6]))||0
                     })).filter(x=>x.t);
                 }
-
-                updateSelects();
-                document.getElementById('status').innerText = "PRONTO";
-            } catch(e) {
-                document.getElementById('status').innerText = "ERRORE DATI";
-            }
+                updateUI();
+                document.getElementById('status-pill').innerText = "READY";
+            } catch(e) { document.getElementById('status-pill').innerText = "ERROR"; }
         }
 
-        function updateSelects() {
-            const h = document.getElementById('home');
-            const a = document.getElementById('away');
-            const r = document.getElementById('ref');
-            h.innerHTML = ''; a.innerHTML = ''; r.innerHTML = '<option value="0">Seleziona Arbitro (Opzionale)</option>';
-            
-            const teams = [...new Set([...db.falli.map(x=>x.t), ...db.tiri.map(x=>x.t)])].sort();
-            teams.forEach(t => {
-                h.add(new Option(t, t));
-                a.add(new Option(t, t));
-            });
-            
-            db.arbitri.forEach(arb => r.add(new Option(`${arb.n} (${arb.m})`, arb.m)));
-            document.getElementById('ref-div').style.display = currentLeague === 'PREMIER' ? 'none' : 'block';
+        function updateUI() {
+            const h = document.getElementById('home'); const a = document.getElementById('away'); const r = document.getElementById('referee');
+            h.innerHTML = ''; a.innerHTML = ''; r.innerHTML = '<option value="0">Seleziona Arbitro</option>';
+            const teams = [...new Set([...database.falli.map(x=>x.t), ...database.tiri.map(x=>x.t)])].sort();
+            teams.forEach(t => { h.add(new Option(t, t)); a.add(new Option(t, t)); });
+            database.refs.forEach(x => r.add(new Option(x.n, x.m)));
+            document.getElementById('ref-box').style.display = currentLeague === 'PREMIER' ? 'none' : 'block';
         }
 
-        function changeLeague(l) {
+        function switchLeague(l) {
             currentLeague = l;
-            ['SERIE_A', 'PREMIER', 'LIGA'].forEach(id => {
-                document.getElementById('btn-'+id).className = id === l ? 'btn-league active-l p-3' : 'btn-league inactive-l p-3';
-            });
-            load();
+            ['btn-sa','btn-pl','btn-lg'].forEach(b => document.getElementById(b).className = "flex-1 py-3 text-xs font-bold rounded-lg bg-slate-900 text-slate-400");
+            document.getElementById(l === 'SERIE_A' ? 'btn-sa' : l === 'PREMIER' ? 'btn-pl' : 'btn-lg').className = "flex-1 py-3 text-xs font-bold rounded-lg bg-blue-600 text-white";
+            loadData();
         }
 
-        function startAnalysis() {
+        function analyze() {
             const h = document.getElementById('home').value;
             const a = document.getElementById('away').value;
-            const refM = parseFloat(document.getElementById('ref').value);
-            
-            if(h === a) return alert("Scegli due squadre diverse!");
+            if(h === a) return;
 
-            let resultsHtml = '';
-
-            // CALCOLO FALLI
+            let html = "";
+            // Calcolo Falli
             if(currentLeague !== 'PREMIER') {
-                const dataH = db.falli.find(x => x.t === h && x.l === 'CASA') || {comm:12, sub:12};
-                const dataA = db.falli.find(x => x.t === a && x.l === 'FUORI') || {comm:12, sub:12};
-                let predF = ((dataH.comm + dataA.sub)/2) + ((dataA.comm + dataH.sub)/2);
-                if(refM > 0) predF = predF * (refM / 24.5); // Correzione basata sulla media arbitro
-                
-                resultsHtml += makeBox("FALLI TOTALI", predF, 24.5);
+                const dH = database.falli.find(x => x.t === h && x.l === 'CASA') || {c:12, s:12};
+                const dA = database.falli.find(x => x.t === a && x.l === 'FUORI') || {c:12, s:12};
+                let pred = ((dH.c + dA.s)/2) + ((dA.c + dH.s)/2);
+                const ref = parseFloat(document.getElementById('referee').value);
+                if(ref > 0) pred = pred * (ref / 24.5);
+                html += makeBox("FALLI TOTALI", pred, parseFloat(document.getElementById('line-f').value));
             }
-
-            // CALCOLO TIRI
-            const tH = db.tiri.find(x => x.t === h);
-            const tA = db.tiri.find(x => x.t === a);
+            // Calcolo Tiri
+            const tH = database.tiri.find(x => x.t === h);
+            const tA = database.tiri.find(x => x.t === a);
             if(tH && tA) {
-                const predT = tH.tc + tA.tsf; // Semplificato: tiri fatti casa + subiti fuori ospite
-                const predTP = tH.tpc + tA.tpsf;
-                resultsHtml += makeBox("TIRI TOTALI", predT, 23.5);
-                resultsHtml += makeBox("TIRI IN PORTA", predTP, 8.5);
+                const pT = tH.tc + tA.tsf;
+                const pTP = tH.tpc + tA.tpsf;
+                html += makeBox("TIRI TOTALI", pT, parseFloat(document.getElementById('line-t').value));
+                html += makeBox("TIRI IN PORTA", pTP, 8.5);
             }
 
-            document.getElementById('results-content').innerHTML = resultsHtml;
+            document.getElementById('grid-results').innerHTML = html;
             document.getElementById('results').classList.remove('hidden');
-            
-            // LOGICA REFRESH PUBBLICITÀ (Simulata)
-            console.log("Analisi eseguita. Richiamo AdMob...");
-            if(window.adsbygoogle) { (adsbygoogle = window.adsbygoogle || []).push({}); }
+
+            // TRIGGER ADMOB (Inserisci qui il comando per ricaricare la pubblicità)
+            console.log("Analisi completata - AdMob Refresh");
         }
 
         function makeBox(title, val, line) {
             const isOver = val > line;
-            const prob = isOver ? 65 : 62; // Probabilità base simulata per brevità
-            return `
-                <div class="val-box ${isOver ? 'over' : 'under'}">
-                    <div class="text-[10px] opacity-80">${title}</div>
-                    <div class="text-2xl font-black">${isOver ? 'OVER' : 'UNDER'} ${line}</div>
-                    <div class="text-xs mt-1">AI: ${val.toFixed(1)} | Prob: ${prob}%</div>
-                </div>
-            `;
+            return `<div class="value-box ${isOver ? 'val-high' : 'val-low'}">
+                <div class="text-[10px] uppercase opacity-70">${title}</div>
+                <div class="res">${isOver ? 'OVER' : 'UNDER'} ${line}</div>
+                <div class="text-xs">AI: ${val.toFixed(2)}</div>
+            </div>`;
         }
 
-        load();
+        loadData();
     </script>
 </body>
 </html>
 """
 
-components.html(html_all_in_one, height=1000, scrolling=True)
+components.html(html_code, height=1200, scrolling=True)
