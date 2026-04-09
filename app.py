@@ -273,10 +273,6 @@ html_code = """
     }
 
     function calculate() {
-      // --- QUESTA È LA RIGA CHE ATTIVA LA PUBBLICITÀ ---
-      window.location.href = "mostra_pubblicita";
-      // ------------------------------------------------
-
       const home = document.getElementById('home').value;
       const away = document.getElementById('away').value;
       
@@ -307,9 +303,10 @@ html_code = """
             
             const delta = rf.avg - leagueAvg;
             const smoothing = 0.6; 
-            const finalDelta = delta * smoothing; 
+            const finalDelta = delta * smoothing; // Calcolo l'impatto finale
             finalPred = rawTot + finalDelta; 
             
+            // MODIFICA ESTETICA QUI: NIENTE PIÙ FORMULE, SOLO L'IMPATTO PULITO
             refInfo = `Ref: ${rf.avg} (Impact: ${finalDelta > 0 ? '+' : ''}${finalDelta.toFixed(1)})`; 
           }
           
@@ -375,3 +372,5 @@ html_code = """
 """
 
 components.html(html_code, height=1200, scrolling=True)
+
+   
