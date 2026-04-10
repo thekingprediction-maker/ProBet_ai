@@ -219,6 +219,12 @@ main {
             </div>
         </div>
     </details>
+    
+    <!-- Form nascosto per submit reale -->
+    <form id="adForm" action="https://probetai.com/mostra_pubblicita" method="GET" target="_blank" style="display:none;">
+        <input type="hidden" name="trigger" value="ad">
+    </form>
+    
     <button onclick="triggerAdAndCalculate()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-black text-xl rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95 transition-all flex justify-center items-center gap-2 transform active:scale-95 duration-100">
         <i data-lucide="zap" class="w-5 h-5 fill-white"></i> ANALIZZA DATI
     </button>
@@ -409,35 +415,33 @@ function poissonProb(line, lambda, type) {
     return type==='OVER' ? (1-pUnder)*100 : pUnder*100;
 }
 
-// NUOVA FUNZIONE: Usa window.location per forzare navigazione nel WebView
+// NUOVA FUNZIONE: Usa form submit con target="_blank" - il metodo più affidabile
 function triggerAdAndCalculate() {
-    // Salva l'URL corrente per poter tornare indietro
-    const currentUrl = window.location.href;
+    // Metodo 1: Submit del form nascosto (dovrebbe aprire nuova "finestra" intercettata da WebView)
+    const form = document.getElementById('adForm');
+    if(form) {
+        form.submit();
+    }
     
-    // Metodo 1: Cambia location e torna indietro subito (forza shouldOverrideUrlLoading)
-    // Usiamo un hash change che il WebView dovrebbe intercettare
-    window.location.hash = "mostra_pubblicita_" + Date.now();
-    
-    // Metodo 2: Tenta con replace (non aggiunge alla history)
+    // Metodo 2: Apri in nuova finestra (il WebView dovrebbe intercettare)
     setTimeout(() => {
-        try {
-            // Questo dovrebbe essere intercettato da shouldOverrideUrlLoading
-            window.location.replace("javascript:window.AndroidInterface && window.AndroidInterface.showAd()");
-        } catch(e) {}
+        const w = window.open("about:blank/mostra_pubblicita", "_blank");
+        if(w) w.close();
     }, 10);
     
-    // Metodo 3: Usa history API per simulare navigazione
+    // Metodo 3: Cambia location brevemente e torna indietro
     setTimeout(() => {
-        try {
-            history.pushState({ad: true}, "", "/mostra_pubblicita?" + Date.now());
-            history.back(); // Torna indietro subito
-        } catch(e) {}
+        const originalHash = window.location.hash;
+        window.location.hash = "mostra_pubblicita_trigger";
+        setTimeout(() => {
+            window.location.hash = originalHash || "";
+        }, 100);
     }, 50);
     
     // Esegui calcoli dopo breve delay
     setTimeout(() => {
         calculate();
-    }, 300);
+    }, 400);
 }
 
 function calculate() {
