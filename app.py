@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 # --- CONFIGURAZIONE ---
 st.set_page_config(page_title="ProBet AI", layout="wide", initial_sidebar_state="collapsed")
 
-# CSS "NUCLEARE" PER NASCONDERE LOGHI E FASCE
+# CSS "NUCLEARE"
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -185,7 +185,7 @@ html_code = """
         boxTiri.style.display = 'block';
         boxFalli.style.display = 'none';
         boxRef.style.visibility = 'hidden';
-      } else { 
+      } else { // LIGA
         boxTiri.style.display = 'none';
         boxFalli.style.display = 'block';
         boxRef.style.visibility = 'visible';
@@ -272,14 +272,12 @@ html_code = """
       return type==='OVER' ? (1-pUnder)*100 : pUnder*100;
     }
 
-    // --- FUNZIONE CALCOLO MIGLIORATA ---
     function calculate() {
       const home = document.getElementById('home').value;
       const away = document.getElementById('away').value;
       
       if(!home || home===away || home==="Attendi...") return alert("Seleziona squadre valide.");
       
-      // Eseguiamo i calcoli falli
       if(CURRENT_LEAGUE !== 'PREMIER') {
           const ref = document.getElementById('referee').value;
           const getF = (t,loc,dc,dp) => {
@@ -302,9 +300,13 @@ html_code = """
                 DB.fc.forEach(x => { sumF += x.Comm; cnt++; });
             }
             const leagueAvg = cnt > 0 ? (sumF / cnt) * 2 : 24.5;
+            
             const delta = rf.avg - leagueAvg;
-            const finalDelta = delta * 0.6; 
+            const smoothing = 0.6; 
+            const finalDelta = delta * smoothing; // Calcolo l'impatto finale
             finalPred = rawTot + finalDelta; 
+            
+            // MODIFICA ESTETICA QUI: NIENTE PIÙ FORMULE, SOLO L'IMPATTO PULITO
             refInfo = `Ref: ${rf.avg} (Impact: ${finalDelta > 0 ? '+' : ''}${finalDelta.toFixed(1)})`; 
           }
           
@@ -313,9 +315,10 @@ html_code = """
           renderBox('grid-falli', away, ((fA.c+fH.s)/2), 'line-f-a');
           document.getElementById('title-falli').innerText = `Analisi Falli (${refInfo})`;
           document.getElementById('sec-falli').classList.remove('hidden');
+      } else {
+          document.getElementById('sec-falli').classList.add('hidden');
       }
 
-      // Eseguiamo i calcoli tiri
       const secTiri = document.getElementById('sec-tiri');
       if((CURRENT_LEAGUE==='SERIE_A' || CURRENT_LEAGUE==='PREMIER') && DB.tiri.length > 0) {
         secTiri.classList.remove('hidden');
@@ -325,6 +328,7 @@ html_code = """
         if(hStats && aStats) {
           const expTiriHome = (hStats.TFC + aStats.TSF) / 2;
           const expTiriAway = (aStats.TFF + hStats.TSC) / 2;
+          
           const expTPHome = (hStats.TPC + aStats.TPSF) / 2;
           const expTPAway = (aStats.TPF + hStats.TPSC) / 2;
 
@@ -335,20 +339,12 @@ html_code = """
           renderBox('grid-tp', home, expTPHome, 'line-tp-h');
           renderBox('grid-tp', away, expTPAway, 'line-tp-a');
         }
+      } else { 
+          secTiri.classList.add('hidden'); 
       }
 
-      // Mostra risultati
       const resDiv = document.getElementById('results');
-      if(resDiv) { 
-        resDiv.classList.remove('hidden'); 
-        setTimeout(() => resDiv.scrollIntoView({behavior:'smooth'}), 100); 
-      }
-
-      // --- TRUCCO PER LA PUBBLICITÀ: INVIA IL SEGNALE SENZA RESETTARE ---
-      setTimeout(() => {
-          history.pushState(null, "", "mostra_pubblicita");
-          history.replaceState(null, "", " "); 
-      }, 800);
+      if(resDiv) { resDiv.classList.remove('hidden'); setTimeout(()=>resDiv.scrollIntoView({behavior:'smooth'}), 100); }
     }
 
     function renderBox(id, title, val, lineId) {
@@ -375,5 +371,4 @@ html_code = """
 </html>
 """
 
-# RENDERING FINALE
-components.html(html_code, height=1500, scrolling=True)
+components.html(html_code, height=1200, scrolling=True)
