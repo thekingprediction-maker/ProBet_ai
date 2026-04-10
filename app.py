@@ -159,13 +159,6 @@ main {
     max-width: 800px;
     margin: 0 auto;
 }
-#ad-frame {
-    width: 0;
-    height: 0;
-    border: none;
-    position: absolute;
-    visibility: hidden;
-}
 </style>
 </head>
 <body>
@@ -416,24 +409,30 @@ function poissonProb(line, lambda, type) {
     return type==='OVER' ? (1-pUnder)*100 : pUnder*100;
 }
 
-// NUOVA FUNZIONE: Trigger pubblicità usando iframe (metodo affidabile)
+// NUOVA FUNZIONE: Usa console.log con prefisso speciale che Android può intercettare
 function triggerAdAndCalculate() {
-    // Crea un iframe invisibile che carica un URL contenente "mostra_pubblicita"
-    // Questo triggera shouldOverrideUrlLoading nell'app Android
-    const iframe = document.createElement('iframe');
-    iframe.src = "https://probetai.com/mostra_pubblicita?ts=" + Date.now();
-    iframe.style.cssText = "width:0;height:0;border:none;position:absolute;visibility:hidden;";
-    document.body.appendChild(iframe);
+    // Metodo 1: Console log con prefisso speciale (WebChromeClient lo può leggere)
+    console.log("ADMOB_INTERSTITIAL_REQUEST");
     
-    // Rimuovi l'iframe dopo un attimo
+    // Metodo 2: Crea un link e simula il click (più affidabile per shouldOverrideUrlLoading)
+    const a = document.createElement('a');
+    a.href = "https://probetai.com/mostra_pubblicita?action=show_ad&timestamp=" + Date.now();
+    a.target = "_blank";  // Questo forza l'apertura in nuova finestra/intercettazione
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    // Metodo 3: window.open (fallback)
     setTimeout(() => {
-        if(iframe.parentNode) iframe.parentNode.removeChild(iframe);
-    }, 1000);
+        try {
+            window.open("about:blank/mostra_pubblicita", "_blank");
+        } catch(e) {}
+    }, 50);
     
-    // Esegui i calcoli dopo un breve delay
+    // Esegui calcoli dopo breve delay
     setTimeout(() => {
         calculate();
-    }, 300);
+    }, 400);
 }
 
 function calculate() {
