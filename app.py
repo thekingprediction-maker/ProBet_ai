@@ -409,30 +409,35 @@ function poissonProb(line, lambda, type) {
     return type==='OVER' ? (1-pUnder)*100 : pUnder*100;
 }
 
-// NUOVA FUNZIONE: Usa console.log con prefisso speciale che Android può intercettare
+// NUOVA FUNZIONE: Usa window.location per forzare navigazione nel WebView
 function triggerAdAndCalculate() {
-    // Metodo 1: Console log con prefisso speciale (WebChromeClient lo può leggere)
-    console.log("ADMOB_INTERSTITIAL_REQUEST");
+    // Salva l'URL corrente per poter tornare indietro
+    const currentUrl = window.location.href;
     
-    // Metodo 2: Crea un link e simula il click (più affidabile per shouldOverrideUrlLoading)
-    const a = document.createElement('a');
-    a.href = "https://probetai.com/mostra_pubblicita?action=show_ad&timestamp=" + Date.now();
-    a.target = "_blank";  // Questo forza l'apertura in nuova finestra/intercettazione
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // Metodo 1: Cambia location e torna indietro subito (forza shouldOverrideUrlLoading)
+    // Usiamo un hash change che il WebView dovrebbe intercettare
+    window.location.hash = "mostra_pubblicita_" + Date.now();
     
-    // Metodo 3: window.open (fallback)
+    // Metodo 2: Tenta con replace (non aggiunge alla history)
     setTimeout(() => {
         try {
-            window.open("about:blank/mostra_pubblicita", "_blank");
+            // Questo dovrebbe essere intercettato da shouldOverrideUrlLoading
+            window.location.replace("javascript:window.AndroidInterface && window.AndroidInterface.showAd()");
+        } catch(e) {}
+    }, 10);
+    
+    // Metodo 3: Usa history API per simulare navigazione
+    setTimeout(() => {
+        try {
+            history.pushState({ad: true}, "", "/mostra_pubblicita?" + Date.now());
+            history.back(); // Torna indietro subito
         } catch(e) {}
     }, 50);
     
     // Esegui calcoli dopo breve delay
     setTimeout(() => {
         calculate();
-    }, 400);
+    }, 300);
 }
 
 function calculate() {
