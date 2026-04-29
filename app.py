@@ -1,19 +1,28 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Configurazione per eliminare ogni margine inutile
+# Configurazione base
 st.set_page_config(page_title="PROBET AI V4", layout="wide", initial_sidebar_state="collapsed")
 
-# CSS per forzare Streamlit a non tagliare nulla e rimuovere spazi bianchi/neri
+# --- FIX AGGRESSIVO PER TAGLIO SUPERIORE ---
 st.markdown("""
     <style>
-        .block-container { padding: 0 !important; max-width: 100% !important; }
+        /* Rimuove l'header di Streamlit e i margini del contenitore principale */
+        [data-testid="stHeader"] {display: none !important;}
+        .main .block-container { padding: 0 !important; margin: 0 !important; }
         footer {display: none !important;}
-        header {display: none !important;}
-        #MainMenu {display: none !important;}
-        .stDeployButton {display:none;}
-        /* Rimuove lo spazio bianco in cima */
-        iframe { margin-top: -40px; }
+        
+        /* Elimina lo spazio bianco extra in cima alla pagina */
+        #root > div:nth-child(1) > div > div > div > div > section > div {
+            padding-top: 0rem !important;
+        }
+        
+        /* Forza l'iframe a stare incollato al bordo superiore */
+        iframe {
+            display: block;
+            margin-top: -50px !important; /* Questo "tira su" il tuo codice per contrastare Streamlit */
+            border: none;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -27,15 +36,21 @@ html_code = """
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Teko:wght@600&family=Inter:wght@400;900&display=swap');
+        
+        /* Reset totale per non avere bordi nel tuo HTML */
         body { background: #020617; color: white; font-family: 'Inter', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        
         .teko { font-family: 'Teko', sans-serif; }
         .card-premium { background: #1e293b; border-radius: 20px; padding: 15px; border: 1px solid #334155; margin: 10px; }
         select, input { background: #0f172a; border: 1px solid #475569; color: white; padding: 10px; width: 100%; border-radius: 10px; font-weight: bold; font-size: 16px; outline: none; appearance: none; }
+        
         .btn-analizza { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; text-transform: uppercase; cursor: pointer; border: none; color: white; margin-top: 10px; }
+        
         .res-box { background: #0f172a; border-radius: 15px; padding: 15px; border-left: 5px solid #3b82f6; margin: 10px; }
         .advice-tag { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: 900; margin-top: 5px; }
         .over-tag { background: #10b981; color: #020617; }
         .under-tag { background: #ef4444; color: white; }
+        
         .label-spread { font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; display: block; }
         .league-btn { cursor: pointer; padding: 10px; border-radius: 8px; font-weight: 900; border: 1px solid #334155; text-align: center; font-size: 10px; }
         .league-active { background: #3b82f6; border-color: #3b82f6; color: white; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
@@ -44,7 +59,7 @@ html_code = """
 </head>
 <body>
     <div id="content-container">
-        <div class="text-center pt-8 pb-4">
+        <div class="text-center pt-4 pb-4">
             <h1 class="text-5xl font-black teko tracking-widest text-white uppercase italic">PROBET <span class="text-blue-500">AI V4</span></h1>
             <p class="text-blue-400 font-bold text-[10px] tracking-widest uppercase italic">Elite Multi-League Analysis System</p>
         </div>
@@ -109,9 +124,9 @@ const BASE_CSV_URL = "https://raw.githubusercontent.com/thekingprediction-maker/
 const REFS_FILE = "ARBITRI_SERIE_A%20-%20Foglio1.csv";
 let currentLeague = 135, dbXG = [];
 
-// Comunica l'altezza reale a Streamlit per eliminare lo spazio vuoto
+// Funzione fondamentale per Streamlit
 function sendHeight() {
-    const height = document.getElementById('content-container').offsetHeight + 50;
+    const height = document.getElementById('content-container').offsetHeight + 30;
     window.parent.postMessage({type: 'streamlit:setFrameHeight', height: height}, '*');
 }
 
@@ -217,5 +232,5 @@ loadData();
 </html>
 """
 
-# height impostata a 2500 ma sendHeight la ridurrà a quella reale automaticamente
-components.html(html_code, height=2500, scrolling=False)
+# Usiamo una height iniziale grande, ma sendHeight la correggerà al millimetro
+components.html(html_code, height=3000, scrolling=False)
