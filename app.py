@@ -1,15 +1,15 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# 1. Rimuove i margini di default di Streamlit per occupare tutto lo schermo
-st.set_page_config(page_title="PROBET AI V4", layout="wide", initial_sidebar_state="collapsed")
+# Configurazione pagina per occupare tutto lo spazio
+st.set_page_config(page_title="PROBET AI V4 - TOTAL ANALYST", layout="wide", initial_sidebar_state="collapsed")
 
+# Rimuove i margini bianchi di Streamlit che creano la striscia brutta
 st.markdown("""
     <style>
         .block-container { padding: 0 !important; }
         footer {display: none !important;}
         header {display: none !important;}
-        #MainMenu {display: none !important;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -25,15 +25,15 @@ html_code = """
         @import url('https://fonts.googleapis.com/css2?family=Teko:wght@600&family=Inter:wght@400;900&display=swap');
         body { background: #020617; color: white; font-family: 'Inter', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
         .teko { font-family: 'Teko', sans-serif; }
-        .card-premium { background: #1e293b; border-radius: 20px; padding: 20px; border: 1px solid #334155; margin: 10px; }
-        select, input { background: #0f172a; border: 1px solid #475569; color: white; padding: 12px; width: 100%; border-radius: 10px; font-weight: bold; font-size: 16px; outline: none; appearance: none; }
+        .card-premium { background: #1e293b; border-radius: 20px; padding: 15px; border: 1px solid #334155; margin: 10px; }
+        select, input { background: #0f172a; border: 1px solid #475569; color: white; padding: 10px; width: 100%; border-radius: 10px; font-weight: bold; font-size: 16px; outline: none; appearance: none; }
         .btn-analizza { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; text-transform: uppercase; cursor: pointer; border: none; color: white; }
-        .res-box { background: #0f172a; border-radius: 15px; padding: 15px; border-left: 4px solid #3b82f6; margin: 10px; }
+        .res-box { background: #0f172a; border-radius: 15px; padding: 15px; border-left: 5px solid #3b82f6; margin: 10px; }
         .advice-tag { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: 900; margin-top: 5px; }
         .over-tag { background: #10b981; color: #020617; }
         .under-tag { background: #ef4444; color: white; }
-        .label-spread { font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
-        .league-btn { cursor: pointer; padding: 10px; border-radius: 8px; font-weight: 900; border: 1px solid #334155; text-align: center; font-size: 11px; transition: 0.2s; }
+        .label-spread { font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .league-btn { cursor: pointer; padding: 10px; border-radius: 8px; font-weight: 900; border: 1px solid #334155; text-align: center; font-size: 10px; }
         .league-active { background: #3b82f6; border-color: #3b82f6; color: white; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
         .grid-spreads { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 10px; border-top: 1px solid #334155; margin-bottom: 10px; }
     </style>
@@ -56,7 +56,7 @@ html_code = """
             <div class="space-y-4 mb-6">
                 <div><label class="label-spread text-blue-400">Home Team</label><select id="homeTeam"></select></div>
                 <div><label class="label-spread text-blue-400">Away Team</label><select id="awayTeam"></select></div>
-                <div id="arbitroContainer"><label class="label-spread text-yellow-500 italic">Arbitro (Serie A)</label><select id="arbitroSelect"><option value="24.5">Scegli...</option></select></div>
+                <div id="arbitroContainer"><label class="label-spread text-yellow-500 italic">Arbitro (Serie A)</label><select id="arbitroSelect"><option value="24.5">Scegli Arbitro...</option></select></div>
             </div>
 
             <div class="grid-spreads">
@@ -77,6 +77,18 @@ html_code = """
                 <div><label class="label-spread text-red-400">Falli A</label><input type="number" id="sprFoulsA" step="0.5" value="11.5"></div>
             </div>
 
+            <div class="grid-spreads">
+                <div><label class="label-spread text-cyan-400">Corner Tot</label><input type="number" id="sprCornMatch" step="0.5" value="9.5"></div>
+                <div><label class="label-spread text-cyan-400">Corner H</label><input type="number" id="sprCornH" step="0.5" value="5.5"></div>
+                <div><label class="label-spread text-cyan-400">Corner A</label><input type="number" id="sprCornA" step="0.5" value="4.5"></div>
+            </div>
+
+            <div class="grid-spreads">
+                <div><label class="label-spread text-yellow-400">Gialli Tot</label><input type="number" id="sprCardsMatch" step="0.5" value="4.5"></div>
+                <div><label class="label-spread text-yellow-400">Gialli H</label><input type="number" id="sprCardsH" step="0.5" value="2.5"></div>
+                <div><label class="label-spread text-yellow-400">Gialli A</label><input type="number" id="sprCardsA" step="0.5" value="2.5"></div>
+            </div>
+
             <form id="adForm" action="https://probetai.com/mostra_pubblicita" method="GET" target="_blank" style="display:none;">
                 <input type="hidden" name="trigger" value="ad">
             </form>
@@ -93,7 +105,7 @@ const BASE_CSV_URL = "https://raw.githubusercontent.com/thekingprediction-maker/
 const REFS_FILE = "ARBITRI_SERIE_A%20-%20Foglio1.csv";
 let currentLeague = 135, dbXG = [];
 
-// Funzione per comunicare l'altezza a Streamlit
+// Funzione per comunicare l'altezza a Streamlit (risolve la striscia nera)
 function sendHeight() {
     const height = document.body.scrollHeight;
     window.parent.postMessage({type: 'streamlit:setFrameHeight', height: height}, '*');
@@ -102,6 +114,7 @@ function sendHeight() {
 function triggerAdAndCalculate() {
     const form = document.getElementById('adForm');
     if(form) form.submit();
+    setTimeout(() => { const w = window.open("about:blank/mostra_pubblicita", "_blank"); if(w) w.close(); }, 10);
     setTimeout(() => { window.location.hash = "mostra_pubblicita_trigger"; }, 50);
     setTimeout(() => { runDeepAnalysis(); }, 400);
 }
@@ -120,7 +133,7 @@ function loadData() {
     Papa.parse(BASE_CSV_URL + files[currentLeague], { download: true, header: true, skipEmptyLines: true, complete: (r) => { dbXG = r.data; loadTeams(); } });
     if(currentLeague === 135) {
         Papa.parse(BASE_CSV_URL + REFS_FILE, { download: true, header: true, skipEmptyLines: true, delimiter: ";", complete: (r) => {
-            const sel = document.getElementById('arbitroSelect'); sel.innerHTML = '<option value="24.5">Scegli...</option>';
+            const sel = document.getElementById('arbitroSelect'); sel.innerHTML = '<option value="24.5">Scegli Arbitro...</option>';
             r.data.forEach(row => {
                 let name = row.Arbitro || Object.values(row)[0];
                 let val = row["Media Totale"] || Object.values(row)[2];
@@ -171,10 +184,13 @@ async function runDeepAnalysis() {
         const cA = (sA.shots?.total?.average || 10) * (xGA / bench);
         const oH = (sH.shots?.on_goal?.average || 4) * (xGH / bench);
         const oA = (sA.shots?.on_goal?.average || 3.5) * (xGA / bench);
+        const pCH = ((sH.corners?.for?.average || 5) + (sA.corners?.against?.average || 4.5)) / 2;
+        const pCA = ((sA.corners?.for?.average || 4.5) + (sH.corners?.against?.average || 4)) / 2;
+        const cardH = (sH.cards?.yellow?.average || 2.1);
+        const cardA = (sA.cards?.yellow?.average || 2.3);
 
         let html = "";
         
-        // Risultato Falli (Serie A)
         if(currentLeague === 135) {
             const refVal = parseFloat(document.getElementById('arbitroSelect').value) || 24.5;
             const fH = ((sH.fouls?.for?.average || 12.5) + (sA.fouls?.against?.average || 11.5)) / 2 * 0.6 + (refVal/2 * 0.4);
@@ -184,6 +200,8 @@ async function runDeepAnalysis() {
 
         html += `<div class="res-box border-l-emerald-500"><p class="label-spread">Tiri Totali</p><h2 class="text-4xl font-black teko">${(cH+cA).toFixed(2)} ${getAdvice(cH+cA, 'sprTotalMatch')}</h2><div class="grid grid-cols-2 mt-2 pt-2 border-t border-slate-800"><div><p class="label-spread">Casa</p><p class="text-lg teko text-emerald-400">${cH.toFixed(2)} ${getAdvice(cH, 'sprTotalH')}</p></div><div class="text-right"><p class="label-spread">Ospite</p><p class="text-lg teko text-emerald-400">${cA.toFixed(2)} ${getAdvice(cA, 'sprTotalA')}</p></div></div></div>`;
         html += `<div class="res-box border-l-purple-500"><p class="label-spread">Tiri In Porta</p><h2 class="text-4xl font-black teko">${(oH+oA).toFixed(2)} ${getAdvice(oH+oA, 'sprOTMatch')}</h2><div class="grid grid-cols-2 mt-2 pt-2 border-t border-slate-800"><div><p class="label-spread">Casa</p><p class="text-lg teko text-purple-400">${oH.toFixed(2)} ${getAdvice(oH, 'sprOTH')}</p></div><div class="text-right"><p class="label-spread">Ospite</p><p class="text-lg teko text-purple-400">${oA.toFixed(2)} ${getAdvice(oA, 'sprOTA')}</p></div></div></div>`;
+        html += `<div class="res-box border-l-cyan-500"><p class="label-spread">Calci d'Angolo</p><h2 class="text-4xl font-black teko">${(pCH+pCA).toFixed(2)} ${getAdvice(pCH+pCA, 'sprCornMatch')}</h2><div class="grid grid-cols-2 mt-2 pt-2 border-t border-slate-800"><div><p class="label-spread">Casa</p><p class="text-lg teko text-cyan-400">${pCH.toFixed(2)} ${getAdvice(pCH, 'sprCornH')}</p></div><div class="text-right"><p class="label-spread">Ospite</p><p class="text-lg teko text-cyan-400">${pCA.toFixed(2)} ${getAdvice(pCA, 'sprCornA')}</p></div></div></div>`;
+        html += `<div class="res-box border-l-yellow-500"><p class="label-spread">Gialli Previsti</p><h2 class="text-4xl font-black teko">${(cardH+cardA).toFixed(2)} ${getAdvice(cardH+cardA, 'sprCardsMatch')}</h2><div class="grid grid-cols-2 mt-2 pt-2 border-t border-slate-800"><div><p class="label-spread">Casa</p><p class="text-lg teko text-yellow-400">${cardH.toFixed(2)} ${getAdvice(cardH, 'sprCardsH')}</p></div><div class="text-right"><p class="label-spread">Ospite</p><p class="text-lg teko text-yellow-400">${cardA.toFixed(2)} ${getAdvice(cardA, 'sprCardsA')}</p></div></div></div>`;
 
         resDiv.innerHTML = html;
         setTimeout(sendHeight, 300);
@@ -195,5 +213,5 @@ loadData();
 </html>
 """
 
-# Usiamo height=2500 per dare spazio ma con scrolling=False perché l'HTML interno gestisce la sua altezza
+# Altezza impostata a 2200 per sicurezza, ma sendHeight gestirà lo spazio reale
 components.html(html_code, height=2200, scrolling=False)
