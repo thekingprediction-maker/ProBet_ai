@@ -1,15 +1,19 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Configurazione pagina per occupare tutto lo spazio
-st.set_page_config(page_title="PROBET AI V4 - TOTAL ANALYST", layout="wide", initial_sidebar_state="collapsed")
+# Configurazione per eliminare ogni margine inutile
+st.set_page_config(page_title="PROBET AI V4", layout="wide", initial_sidebar_state="collapsed")
 
-# Rimuove i margini bianchi di Streamlit che creano la striscia brutta
+# CSS per forzare Streamlit a non tagliare nulla e rimuovere spazi bianchi/neri
 st.markdown("""
     <style>
-        .block-container { padding: 0 !important; }
+        .block-container { padding: 0 !important; max-width: 100% !important; }
         footer {display: none !important;}
         header {display: none !important;}
+        #MainMenu {display: none !important;}
+        .stDeployButton {display:none;}
+        /* Rimuove lo spazio bianco in cima */
+        iframe { margin-top: -40px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -27,7 +31,7 @@ html_code = """
         .teko { font-family: 'Teko', sans-serif; }
         .card-premium { background: #1e293b; border-radius: 20px; padding: 15px; border: 1px solid #334155; margin: 10px; }
         select, input { background: #0f172a; border: 1px solid #475569; color: white; padding: 10px; width: 100%; border-radius: 10px; font-weight: bold; font-size: 16px; outline: none; appearance: none; }
-        .btn-analizza { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; text-transform: uppercase; cursor: pointer; border: none; color: white; }
+        .btn-analizza { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; text-transform: uppercase; cursor: pointer; border: none; color: white; margin-top: 10px; }
         .res-box { background: #0f172a; border-radius: 15px; padding: 15px; border-left: 5px solid #3b82f6; margin: 10px; }
         .advice-tag { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: 900; margin-top: 5px; }
         .over-tag { background: #10b981; color: #020617; }
@@ -39,8 +43,8 @@ html_code = """
     </style>
 </head>
 <body>
-    <div class="w-full">
-        <div class="text-center py-6">
+    <div id="content-container">
+        <div class="text-center pt-8 pb-4">
             <h1 class="text-5xl font-black teko tracking-widest text-white uppercase italic">PROBET <span class="text-blue-500">AI V4</span></h1>
             <p class="text-blue-400 font-bold text-[10px] tracking-widest uppercase italic">Elite Multi-League Analysis System</p>
         </div>
@@ -105,9 +109,9 @@ const BASE_CSV_URL = "https://raw.githubusercontent.com/thekingprediction-maker/
 const REFS_FILE = "ARBITRI_SERIE_A%20-%20Foglio1.csv";
 let currentLeague = 135, dbXG = [];
 
-// Funzione per comunicare l'altezza a Streamlit (risolve la striscia nera)
+// Comunica l'altezza reale a Streamlit per eliminare lo spazio vuoto
 function sendHeight() {
-    const height = document.body.scrollHeight;
+    const height = document.getElementById('content-container').offsetHeight + 50;
     window.parent.postMessage({type: 'streamlit:setFrameHeight', height: height}, '*');
 }
 
@@ -151,7 +155,7 @@ async function loadTeams() {
     data.response.sort((x,y) => x.team.name.localeCompare(y.team.name)).forEach(t => {
         h.add(new Option(t.team.name, t.team.id)); a.add(new Option(t.team.name, t.team.id));
     });
-    setTimeout(sendHeight, 500);
+    setTimeout(sendHeight, 600);
 }
 
 function getAdvice(pred, elementId) {
@@ -204,7 +208,7 @@ async function runDeepAnalysis() {
         html += `<div class="res-box border-l-yellow-500"><p class="label-spread">Gialli Previsti</p><h2 class="text-4xl font-black teko">${(cardH+cardA).toFixed(2)} ${getAdvice(cardH+cardA, 'sprCardsMatch')}</h2><div class="grid grid-cols-2 mt-2 pt-2 border-t border-slate-800"><div><p class="label-spread">Casa</p><p class="text-lg teko text-yellow-400">${cardH.toFixed(2)} ${getAdvice(cardH, 'sprCardsH')}</p></div><div class="text-right"><p class="label-spread">Ospite</p><p class="text-lg teko text-yellow-400">${cardA.toFixed(2)} ${getAdvice(cardA, 'sprCardsA')}</p></div></div></div>`;
 
         resDiv.innerHTML = html;
-        setTimeout(sendHeight, 300);
+        setTimeout(sendHeight, 400);
     } catch(e) { resDiv.innerHTML = "<div class='p-4 bg-red-900 rounded-xl'>Errore Caricamento Dati</div>"; }
 }
 loadData();
@@ -213,5 +217,5 @@ loadData();
 </html>
 """
 
-# Altezza impostata a 2200 per sicurezza, ma sendHeight gestirà lo spazio reale
-components.html(html_code, height=2200, scrolling=False)
+# height impostata a 2500 ma sendHeight la ridurrà a quella reale automaticamente
+components.html(html_code, height=2500, scrolling=False)
