@@ -210,7 +210,7 @@ html_code = """
     
     <div class="header">
         <h1 class="teko">PROBET <span style="color:#3b82f6">AI</span></h1>
-        <div class="version">V4 PRO • ELITE ANALYSIS 2025/26</div>
+        <div class="version">V4 PRO • ELITE ANALYSIS 2026/27</div>
     </div>
 
     <div class="league-scroller">
