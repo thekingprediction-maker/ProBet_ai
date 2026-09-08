@@ -330,7 +330,7 @@ const LEAGUE_DATA = {
 // nella stagione nuova) resta su 2025 (stagione precedente). Da settembre in poi, quando
 // ci saranno abbastanza partite giocate nella stagione 2025/26 per tutte le squadre
 // (incluse le neopromosse), cambiare SOLO questo numero in 2026.
-const SEASON = 2025;
+const SEASON = 2026;
 
 // Stagione precedente, usata come "base di partenza" quando la stagione corrente ha
 // ancora poche partite giocate (tipico delle prime giornate dopo il cambio di SEASON).
