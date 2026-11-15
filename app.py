@@ -284,6 +284,11 @@ html_code = """
             </div>
         </div>
 
+
+
+
+
+
         <form id="adForm" action="https://probetai.com/mostra_pubblicita" method="GET" target="_blank" style="display:none;">
             <input type="hidden" name="trigger" value="ad">
         </form>
@@ -762,8 +767,14 @@ function getAdviceAdvanced(mean, variance, n, spread) {
     // da quanto la previsione si allontani dalla linea inserita.
     if (realN === 0) precisionLabel = 'BASE';
 
+    // Etichetta di forza del consiglio (dal backtest: sopra il 70% il modello e' molto affidabile,
+    // sotto il 60% e' poco piu' di un testa o croce)
+    let strengthTag = '';
+    if (displayConf >= 70) strengthTag = `<span style="margin-left:6px;font-size:9px;font-weight:900;letter-spacing:.5px;color:#10b981;border:1px solid #10b981;border-radius:6px;padding:1px 5px">FORTE</span>`;
+    else if (displayConf < 60) strengthTag = `<span style="margin-left:6px;font-size:9px;font-weight:800;letter-spacing:.5px;color:#94a3b8;border:1px solid #475569;border-radius:6px;padding:1px 5px">INCERTO</span>`;
+
     return {
-        html: `<span class="tag-pill ${isOver ? 'tag-over' : 'tag-under'}">${direction} ${spread} (${displayConf.toFixed(1)}%)</span>`,
+        html: `<span class="tag-pill ${isOver ? 'tag-over' : 'tag-under'}">${direction} ${spread} (${displayConf.toFixed(1)}%)</span>${strengthTag}`,
         confidence: Math.min(Math.max(displayConf, 5), 95),
         isOver: isOver,
         precision: precisionLabel
@@ -1043,6 +1054,68 @@ async function getFixturesH2H(teamIdH, teamIdA, apiId) {
     } catch (e) { return null; }
 }
 
+// Varianza della differenza Casa - Ospite (con correlazione di ritmo partita)
+function diffVariance(varH, varA) {
+    const vH = Math.max(varH || 0, 0), vA = Math.max(varA || 0, 0);
+    return vH + vA - 2 * RHO_GAME_PACE * Math.sqrt(vH * vA);
+}
+
+// 1X2 sul conteggio: 1 = Casa ne fa di piu', X = pari, 2 = Ospite ne fa di piu'
+// Approssimazione Normale della differenza con correzione di continuita'
+function prob1X2(meanH, varH, meanA, varA) {
+    const muD = meanH - meanA;
+    const sd = Math.sqrt(Math.max(diffVariance(varH, varA), 0.25));
+    const p1 = 1 - normalCDF(0.5, muD, sd);
+    const p2 = normalCDF(-0.5, muD, sd);
+    const pX = Math.max(0, 1 - p1 - p2);
+    return { p1, pX, p2 };
+}
+
+function label1X2(nH, nA) {
+    const n = Math.min(nH || 0, nA || 0);
+    if (n >= 4) return 'ALTA';
+    if (n >= 2) return 'MEDIA';
+    return 'BASE';
+}
+
+// Blocco 1X2 incorporato dentro la card del mercato, con consiglio diretto
+function render1X2Block(o) {
+    const cols = [
+        { k: 'p1', lab: '1 CASA' },
+        { k: 'pX', lab: 'X PARI' },
+        { k: 'p2', lab: '2 OSPITE' }
+    ];
+    const best = cols.reduce((a, b) => (o.probs[b.k] > o.probs[a.k] ? b : a), cols[0]);
+    const pBest = o.probs[best.k];
+    const solid = pBest >= 0.50;
+    // Dal backtest (253 partite): l'1X2 e' provato sui TIRI TOTALI (~67%), quindi li' basta il 65%
+    // per dire "FORTE". Sugli altri mercati i casi ad alta probabilita' sono pochi per verificarli,
+    // quindi serve una soglia piu' alta (70%); sotto resta "INDICATIVO".
+    const reliable = !!o.reliable;
+    const strong = pBest >= (reliable ? 0.65 : 0.70);
+    const advColor = solid ? ((reliable || strong) ? '#10b981' : '#fbbf24') : '#fbbf24';
+    const advText = strong ? `CONSIGLIO FORTE 1X2: ${best.lab}`
+        : (solid ? (reliable ? `CONSIGLIO 1X2: ${best.lab}` : `INDICATIVO 1X2: ${best.lab}`)
+                 : `PARTITA EQUILIBRATA: lieve ${best.lab}`);
+    const cells = cols.map(c => {
+        const p = o.probs[c.k];
+        const fair = p > 0.001 ? (1 / p).toFixed(2) : '-';
+        const hl = c.k === best.k ? `border:1px solid ${advColor};background:rgba(255,255,255,0.04);` : 'border:1px solid rgba(255,255,255,0.06);';
+        return `<div style="flex:1;text-align:center;padding:8px 4px;border-radius:12px;${hl}">
+            <div style="font-size:9px;color:#94a3b8;font-weight:700">${c.lab}</div>
+            <div style="font-size:20px;font-weight:800;color:#f8fafc">${(p * 100).toFixed(1)}%</div>
+            <div style="font-size:9px;color:#94a3b8">Quota giusta ${fair}</div></div>`;
+    }).join('');
+    return `
+        <div style="margin:12px 0;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <span style="font-size:11px;font-weight:800;color:${o.color}">1X2 ${o.title}</span>
+                <span style="font-size:10px;font-weight:800;color:${advColor}">${advText} (${(pBest * 100).toFixed(0)}%)</span>
+            </div>
+            <div style="display:flex;gap:8px">${cells}</div>
+        </div>`;
+}
+
 async function runDeepAnalysis() {
     const resDiv = document.getElementById('results');
     resDiv.classList.remove('hidden');
@@ -1216,8 +1289,10 @@ async function runDeepAnalysis() {
             cA = manualA != null ? manualA : priors.shots;
         }
 
-        const xgFactorH = 0.75 + (xGH / bench) * 0.25;
-        const xgFactorA = 0.75 + (xGA / bench) * 0.25;
+        // xG per tiro DISATTIVATO: il backtest su 12 giornate (253 partite) mostra che peggiora
+        // leggermente le previsioni dei tiri (l'informazione e' gia' nei dati reali dell'API).
+        const xgFactorH = 1.0;
+        const xgFactorA = 1.0;
         cH = cH * xgFactorH * formH.formFactor * momentumH;
         cA = cA * xgFactorA * formA.formFactor * momentumA;
 
@@ -1376,7 +1451,9 @@ async function runDeepAnalysis() {
             const refParts = refSelectedVal.split(',');
             // Media arbitro ritirata verso la media di lega in base alle partite arbitrate
             const refTotal = shrinkRef(parseFloat(refParts[0]) || 24.5, parseFloat(refParts[3]) || 0, 24.5);
-            refFactor = refTotal / 24.5;
+            // Effetto arbitro sui cartellini DISATTIVATO: il backtest mostra che la media falli
+            // dell'arbitro non migliora la previsione dei cartellini (refFactor resta 1.0).
+            // refFactor = refTotal / 24.5;
         }
 
         let pCardsH = baseCardsH * refFactor * (2.05 - formH.formFactor);
@@ -1482,6 +1559,13 @@ async function runDeepAnalysis() {
         const advCardsH = getAdviceAdvanced(pCardsH, varCardsH, formCardsH.n, sprCardsH);
         const advCardsA = getAdviceAdvanced(pCardsA, varCardsA, formCardsA.n, sprCardsA);
 
+        const blk1X2 = {
+            shots: render1X2Block({title:'Tiri Totali', color:'#10b981', reliable:true, probs: prob1X2(cH, varShotsH, cA, varShotsA)}),
+            sot:   render1X2Block({title:'Tiri In Porta', color:'#a78bfa', probs: prob1X2(s_cH, varSotH, s_cA, varSotA)}),
+            corn:  render1X2Block({title:'Corner', color:'#22d3ee', probs: prob1X2(pCornH, varCornH, pCornA, varCornA)}),
+            cards: render1X2Block({title:'Cartellini', color:'#fbbf24', probs: prob1X2(pCardsH, varCardsH, pCardsA, varCardsA)})
+        };
+
         let finalHTML = `
             <div class="result-card border-green">
                 <div class="res-header">
@@ -1491,6 +1575,7 @@ async function runDeepAnalysis() {
                 <div class="res-value">${totalShots.toFixed(2)}</div>
                 <div class="mb-2">${advTotal.html}</div>
                 ${renderConfidenceBar(advTotal.confidence)}
+                ${blk1X2.shots}
                 <div class="split-stats">
                     <div class="stat-col">
                         <h4>Home Prediction</h4>
@@ -1515,6 +1600,7 @@ async function runDeepAnalysis() {
                 <div class="res-value">${totalSOT.toFixed(2)}</div>
                 <div class="mb-2">${advOT.html}</div>
                 ${renderConfidenceBar(advOT.confidence)}
+                ${blk1X2.sot}
                 <div class="split-stats">
                     <div class="stat-col">
                         <h4>Home SOT</h4>
@@ -1549,6 +1635,7 @@ async function runDeepAnalysis() {
                     <div class="res-value">${totalFouls.toFixed(2)}</div>
                     <div class="mb-2">${advFouls.html}</div>
                     ${renderConfidenceBar(advFouls.confidence)}
+                    ${render1X2Block({title:'Falli Commessi', color:'#f87171', probs: prob1X2(pFoulsH, varFoulsH, pFoulsA, varFoulsA)})}
                     <div class="split-stats">
                         <div class="stat-col">
                             <h4>Home Fouls</h4>
@@ -1575,6 +1662,7 @@ async function runDeepAnalysis() {
                 <div class="res-value">${totalCorners.toFixed(2)}</div>
                 <div class="mb-2">${advCorn.html}</div>
                 ${renderConfidenceBar(advCorn.confidence)}
+                ${blk1X2.corn}
                 <div class="split-stats">
                     <div class="stat-col">
                         <h4>Home Corners</h4>
@@ -1597,6 +1685,7 @@ async function runDeepAnalysis() {
                 <div class="res-value">${totalCards.toFixed(2)}</div>
                 <div class="mb-2">${advCards.html}</div>
                 ${renderConfidenceBar(advCards.confidence)}
+                ${blk1X2.cards}
                 <div class="split-stats">
                     <div class="stat-col">
                         <h4>Home Cards</h4>
